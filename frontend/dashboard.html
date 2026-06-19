@@ -1,0 +1,4046 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FFC — Bảng điều khiển</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script>
+  /* Apply saved theme synchronously BEFORE first paint — avoids the
+     light→dark flash that would happen if we waited for JS at end of body. */
+  (function () {
+    try {
+      if (localStorage.getItem('ffc_theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (_) { /* localStorage blocked → fall back to light */ }
+  })();
+</script>
+<script src="assets/js/i18n.js?v=4"></script>
+<script src="assets/js/api.js?v=1"></script>
+<script src="assets/js/notifications.js?v=1" defer></script>
+<style>
+  :root {
+    /* Brand accents — same in both themes */
+    --navy: #1E3A5F;
+    --blue: #2563EB;
+    --sky:  #3B82F6;
+    --sky-light: #60A5FA;
+    --cyan-light: #7DD3FC;
+
+    /* LIGHT theme (default) */
+    --bg:        #DBEAFE;
+    --surface:   rgba(255, 255, 255, 0.92);
+    --surface-2: rgba(255, 255, 255, 0.75);
+    --border:    rgba(30, 58, 95, 0.12);
+
+    --text:      #0F172A;
+    --text-2:    #475569;
+    --text-3:    #94A3B8;
+
+    --input-bg:  #ffffff;
+    --modal-bg:  #ffffff;
+    --row-hover: rgba(59, 130, 246, 0.04);
+
+    --green:  #16A34A;
+    --amber:  #F59E0B;
+    --red:    #DC2626;
+    --purple: #7C3AED;
+  }
+
+  /* DARK theme — applied via [data-theme="dark"] on <html>.
+     Brand accents stay the same; only neutrals/surfaces flip. */
+  html[data-theme="dark"] {
+    --bg:        #0B1426;
+    --surface:   rgba(22, 32, 50, 0.88);
+    --surface-2: rgba(22, 32, 50, 0.65);
+    --border:    rgba(148, 163, 184, 0.18);
+
+    --text:      #F1F5F9;
+    --text-2:    #CBD5E1;
+    --text-3:    #94A3B8;
+
+    --input-bg:  #1E293B;
+    --modal-bg:  #182236;
+    --row-hover: rgba(59, 130, 246, 0.12);
+  }
+  html[data-theme="dark"] .topbar h1 { color: var(--sky-light); }
+  html[data-theme="dark"] .topbar .search input { color: var(--text); }
+  html[data-theme="dark"] .topbar .icon-btn { color: var(--text-2); }
+  html[data-theme="dark"] .topbar .icon-btn:hover { background: rgba(59, 130, 246, 0.18); color: var(--sky-light); }
+  html[data-theme="dark"] .card h3 { color: var(--sky-light); }
+  html[data-theme="dark"] .stub h2 { color: var(--sky-light); }
+  html[data-theme="dark"] .stub .ic { background: rgba(59, 130, 246, 0.18); color: var(--sky-light); }
+  html[data-theme="dark"] .kpi .val { color: var(--sky-light); }
+  html[data-theme="dark"] .kpi .ic.blue   { background: rgba(96, 165, 250, 0.20); color: var(--sky-light); }
+  html[data-theme="dark"] .kpi .ic.amber  { background: rgba(245, 158, 11, 0.22); }
+  html[data-theme="dark"] .kpi .ic.green  { background: rgba(22, 163, 74, 0.20); }
+  html[data-theme="dark"] .kpi .ic.purple { background: rgba(124, 58, 237, 0.22); }
+  html[data-theme="dark"] table.t .ticket-code { color: var(--sky-light); }
+  html[data-theme="dark"] .sidebar-foot .who .name { color: var(--text); }
+  html[data-theme="dark"] .sidebar-brand img { filter: drop-shadow(0 2px 8px rgba(96, 165, 250, 0.40)); }
+  html[data-theme="dark"] .modal-head .code { color: var(--sky-light); }
+  html[data-theme="dark"] .modal-foot { background: rgba(11, 20, 38, 0.55); }
+  html[data-theme="dark"] .field input,
+  html[data-theme="dark"] .field select,
+  html[data-theme="dark"] .field textarea,
+  html[data-theme="dark"] .check-grid label,
+  html[data-theme="dark"] .modal,
+  html[data-theme="dark"] .search-results,
+  html[data-theme="dark"] .toolbar .filters,
+  html[data-theme="dark"] .status-step { background: var(--input-bg); color: var(--text); }
+  html[data-theme="dark"] .toolbar .filters button.active { background: var(--surface); color: var(--sky-light); }
+  html[data-theme="dark"] .status-step.done { background: rgba(22, 163, 74, 0.20); color: #4ADE80; }
+  html[data-theme="dark"] .info-grid .item .v { color: var(--text); }
+  html[data-theme="dark"] .toast { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  html[data-theme="dark"] table.t td { color: var(--text); }
+  html[data-theme="dark"] table.t th { color: var(--text-3); }
+  html[data-theme="dark"] table.t tr:hover td { background: var(--row-hover); }
+  /* Hover states that hard-code white in light mode need dark variants */
+  html[data-theme="dark"] .btn-ghost:hover { background: rgba(96, 165, 250, 0.15); color: var(--text); }
+  html[data-theme="dark"] .icon-row button { background: var(--input-bg); color: var(--text-2); }
+  html[data-theme="dark"] .icon-row button:hover { background: rgba(59, 130, 246, 0.15); color: var(--sky-light); }
+  html[data-theme="dark"] .status-step:hover { background: rgba(59, 130, 246, 0.15); color: var(--sky-light); }
+  html[data-theme="dark"] .modal-head .close:hover { background: rgba(220, 38, 38, 0.18); }
+  html[data-theme="dark"] .sidebar-foot button:hover { background: rgba(220, 38, 38, 0.18); }
+  html[data-theme="dark"] .search-results .item:hover { background: rgba(59, 130, 246, 0.15); }
+  html[data-theme="dark"] .badge.waiting    { background: rgba(245, 158, 11, 0.20); color: #FCD34D; }
+  html[data-theme="dark"] .badge.in-progress{ background: rgba(59, 130, 246, 0.22); color: var(--sky-light); }
+  html[data-theme="dark"] .badge.testing    { background: rgba(124, 58, 237, 0.22); color: #C4B5FD; }
+  html[data-theme="dark"] .badge.done       { background: rgba(22, 163, 74, 0.22); color: #86EFAC; }
+  html[data-theme="dark"] .badge.urgent     { background: rgba(220, 38, 38, 0.22); color: #FCA5A5; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; background: var(--bg); min-height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    background: transparent;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ============ FLOATING MESH (same as index) ============ */
+  .page-bg-mesh {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 900px 700px at 12% 18%, rgba(30, 58, 95, 0.55), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 88% 28%, rgba(59, 130, 246, 0.60), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 50% 72%, rgba(125, 211, 252, 0.55), transparent 60%),
+      radial-gradient(ellipse 620px 600px at 92% 88%, rgba(96, 165, 250, 0.55), transparent 60%);
+    filter: blur(50px);
+    z-index: 0;
+    pointer-events: none;
+    animation: mesh-drift 14s ease-in-out infinite alternate;
+  }
+  /* Mesh in dark mode — keep the brand blobs but tone them down on a deep
+     navy base so the page reads as dark without looking flat. */
+  html[data-theme="dark"] .page-bg-mesh {
+    background:
+      radial-gradient(ellipse 900px 700px at 12% 18%, rgba(59, 130, 246, 0.35), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 88% 28%, rgba(125, 211, 252, 0.28), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 50% 72%, rgba(96, 165, 250, 0.30), transparent 60%),
+      radial-gradient(ellipse 620px 600px at 92% 88%, rgba(59, 130, 246, 0.32), transparent 60%);
+  }
+  @keyframes mesh-drift {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-30px, 20px) scale(1.05); }
+  }
+
+  /* ============ APP SHELL ============ */
+  .app {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 64px 1fr;
+    grid-template-areas:
+      "sidebar topbar"
+      "sidebar main";
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    grid-area: sidebar;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text);
+  }
+  .sidebar-brand img {
+    height: 56px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 2px 8px rgba(30, 58, 95, 0.12));
+  }
+  .sidebar-brand .label { display: none; } /* wordmark hidden — logo only */
+
+  .nav-section-title {
+    font-size: 11px;
+    color: var(--text-3);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 16px 20px 6px;
+  }
+  .nav-list {
+    list-style: none;
+    padding: 0 12px 16px;
+    margin: 0;
+    flex: 1;
+    overflow-y: auto;
+  }
+  .nav-list li { margin: 1px 0; }
+  .nav-list a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .nav-list a:hover {
+    background: rgba(59, 130, 246, 0.10);
+    color: var(--blue);
+  }
+  .nav-list a.active {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+  }
+  .nav-list a.active .nav-badge { background: rgba(255,255,255,0.25); color: #fff; }
+  .nav-list svg {
+    width: 18px; height: 18px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .nav-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(220, 38, 38, 0.12);
+    color: var(--red);
+    padding: 2px 8px;
+    border-radius: 999px;
+  }
+
+  .sidebar-foot {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .sidebar-foot .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--sky));
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .sidebar-foot .who { flex: 1; min-width: 0; }
+  .sidebar-foot .who .name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sidebar-foot .who .role { font-size: 11px; color: var(--text-3); }
+  .sidebar-foot button {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: var(--text-2);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .sidebar-foot button:hover { background: rgba(220, 38, 38, 0.08); color: var(--red); border-color: rgba(220, 38, 38, 0.30); }
+  .sidebar-foot button svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; display: block; }
+
+  /* ---------- Topbar ---------- */
+  .topbar {
+    grid-area: topbar;
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .topbar h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 0;
+  }
+  .topbar h1 .sub {
+    font-weight: 500;
+    color: var(--text-2);
+    font-size: 13px;
+    margin-left: 8px;
+  }
+  .topbar .grow { flex: 1; }
+  .topbar .search {
+    position: relative;
+    flex: 0 1 360px;
+  }
+  .topbar .search input {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px 0 40px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.15s;
+  }
+  .topbar .search input:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    background: #fff;
+  }
+  .topbar .search svg {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px; height: 18px;
+    stroke: var(--text-3);
+    fill: none;
+    stroke-width: 2;
+  }
+  .topbar .icon-btn {
+    width: 40px; height: 40px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-2);
+    position: relative;
+    transition: all 0.15s;
+  }
+  .topbar .icon-btn:hover { background: #fff; color: var(--blue); border-color: var(--sky); }
+  .topbar .icon-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .topbar .icon-btn .dot {
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  /* Notification badge (number) on top of bell */
+  .topbar .icon-btn .notif-badge {
+    position: absolute;
+    top: -4px; right: -4px;
+    min-width: 18px; height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--surface);
+    line-height: 1;
+  }
+
+  /* ===== Notification dropdown panel ===== */
+  .notif-panel {
+    position: fixed;
+    top: 56px;
+    right: 200px;
+    width: 380px;
+    max-height: 480px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity .2s, transform .2s;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .notif-panel.open { opacity: 1; transform: translateY(0); }
+  .notif-head {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .notif-head strong { color: var(--text); font-size: 14px; }
+  .notif-mark-all {
+    background: transparent;
+    border: none;
+    color: var(--blue);
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .notif-mark-all:hover { text-decoration: underline; }
+
+  .notif-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 100px;
+  }
+  .notif-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-3);
+    font-size: 13px;
+  }
+  .notif-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .12s;
+    position: relative;
+  }
+  .notif-item:hover { background: rgba(37, 99, 235, 0.04); }
+  .notif-item.unread { background: rgba(37, 99, 235, 0.06); }
+  .notif-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .notif-body { flex: 1; min-width: 0; }
+  .notif-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .notif-msg { font-size: 12px; color: var(--text-2); line-height: 1.4; }
+  .notif-time { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+  .notif-unread-dot {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px; height: 8px;
+    background: var(--blue);
+    border-radius: 50%;
+  }
+  .topbar .primary {
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .topbar .primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.40); }
+  .topbar .primary svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+
+  /* ---------- Main content ---------- */
+  .main {
+    grid-area: main;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .pane { display: none; }
+  .pane.active { display: block; animation: pane-in 0.2s ease; }
+  @keyframes pane-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Shared card / table styles ---------- */
+  .card {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 14px rgba(30, 58, 95, 0.06);
+  }
+  .card h3 {
+    font-size: 15px;
+    color: var(--navy);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h3 .small {
+    font-size: 12px;
+    color: var(--text-3);
+    font-weight: 500;
+    margin-left: auto;
+  }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .kpi:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(30, 58, 95, 0.10); }
+  .kpi .ic {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .kpi .ic svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .kpi .ic.blue   { background: rgba(37, 99, 235, 0.12);  color: var(--blue);   }
+  .kpi .ic.amber  { background: rgba(245, 158, 11, 0.15); color: var(--amber);  }
+  .kpi .ic.green  { background: rgba(22, 163, 74, 0.12);  color: var(--green);  }
+  .kpi .ic.purple { background: rgba(124, 58, 237, 0.12); color: var(--purple); }
+  .kpi .val {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  .kpi .lbl { font-size: 12px; color: var(--text-2); font-weight: 600; margin-top: 2px; }
+  .kpi .delta { font-size: 11px; color: var(--green); margin-top: 2px; font-weight: 600; }
+  .kpi .delta.down { color: var(--red); }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+  }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; margin: -4px; padding: 4px; }
+  table.t {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  table.t th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-3);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.t td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(30, 58, 95, 0.06);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  table.t tr:last-child td { border-bottom: none; }
+  table.t tr:hover td { background: rgba(59, 130, 246, 0.04); }
+  table.t .ticket-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 600;
+    color: var(--blue);
+  }
+  table.t .device { font-weight: 600; }
+  table.t .device .meta { font-size: 11px; color: var(--text-3); font-weight: 500; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .badge.waiting    { background: rgba(245, 158, 11, 0.15); color: #B45309; }
+  .badge.in-progress{ background: rgba(37, 99, 235, 0.12);  color: var(--blue);  }
+  .badge.testing    { background: rgba(124, 58, 237, 0.12); color: var(--purple); }
+  .badge.done       { background: rgba(22, 163, 74, 0.12);  color: var(--green);  }
+  .badge.delivered  { background: rgba(100, 116, 139, 0.15); color: #475569; }
+  .badge.urgent     { background: rgba(220, 38, 38, 0.12);  color: var(--red);    }
+
+  .icon-row {
+    display: inline-flex;
+    gap: 4px;
+  }
+  .icon-row button {
+    width: 28px; height: 28px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .icon-row button:hover { background: #fff; color: var(--blue); border-color: var(--sky); }
+  .icon-row button svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* ---------- Forms ---------- */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .form-grid .full { grid-column: 1 / -1; }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 6px;
+  }
+  .field label .req { color: var(--red); }
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    font: inherit;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: all 0.15s;
+  }
+  .field textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--sky);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  }
+
+  .check-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .check-grid label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s;
+  }
+  .check-grid label:hover { border-color: var(--sky); background: rgba(59, 130, 246, 0.04); }
+  .check-grid input { width: auto; }
+
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  .btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.40); }
+  .btn-ghost {
+    background: var(--surface-2);
+    color: var(--text-2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { background: #fff; color: var(--text); }
+
+  /* ---------- Tickets toolbar ---------- */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar .filters {
+    display: flex;
+    gap: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px;
+  }
+  .toolbar .filters button {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: all 0.15s;
+  }
+  .toolbar .filters button.active {
+    background: #fff;
+    color: var(--blue);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+  .toolbar .grow { flex: 1; }
+
+  /* ---------- Coming soon stubs ---------- */
+  .stub {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-2);
+  }
+  .stub .ic {
+    width: 64px; height: 64px;
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--blue);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+  }
+  .stub .ic svg { width: 32px; height: 32px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .stub h2 { color: var(--navy); margin-bottom: 8px; font-size: 22px; }
+  .stub p { max-width: 460px; margin: 0 auto; }
+
+  /* ---------- Modal (ticket detail / customer detail / generic) ---------- */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: #fff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 760px;
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.25);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.18s;
+  }
+  .modal-backdrop.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-head {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .modal-head .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--navy);
+  }
+  .modal-head .grow { flex: 1; }
+  .modal-head .close {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .modal-head .close:hover { background: rgba(220, 38, 38, 0.08); color: var(--red); border-color: rgba(220, 38, 38, 0.30); }
+  .modal-head .close svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .modal-foot {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  /* Status timeline */
+  .status-line {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 0 20px;
+    flex-wrap: wrap;
+  }
+  .status-step {
+    flex: 1 1 0;
+    min-width: 90px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-3);
+    transition: all 0.18s;
+    position: relative;
+  }
+  .status-step:hover { background: #fff; color: var(--blue); border-color: var(--sky); }
+  .status-step.done {
+    background: rgba(22, 163, 74, 0.10);
+    border-color: rgba(22, 163, 74, 0.30);
+    color: var(--green);
+  }
+  .status-step.current {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.30);
+  }
+  .status-step .num {
+    display: inline-block;
+    width: 18px; height: 18px;
+    line-height: 18px;
+    border-radius: 50%;
+    background: currentColor;
+    color: #fff;
+    font-size: 11px;
+    margin-right: 4px;
+    opacity: 0.5;
+  }
+  .status-step.current .num,
+  .status-step.done .num { opacity: 1; }
+  .status-step.current .num { color: var(--blue); background: #fff; }
+
+  /* Info grid in modal */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+    margin-bottom: 18px;
+  }
+  .info-grid .item .k {
+    font-size: 11px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .info-grid .item .v { font-size: 14px; color: var(--text); font-weight: 500; }
+  .info-grid .item.full { grid-column: 1 / -1; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    z-index: 300;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.22s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+
+  /* ---------- Chat support pane ---------- */
+  .chat-shell {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    height: calc(100vh - 64px - 48px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(30, 58, 95, 0.06);
+  }
+  .chat-list {
+    border-right: 1px solid var(--border);
+    background: var(--surface-2);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-list-head {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .chat-list-head h3 { font-size: 14px; color: var(--navy); margin: 0; }
+  .chat-list-head .filter {
+    margin-left: auto;
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px;
+  }
+  .chat-list-head .filter button {
+    padding: 4px 10px;
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+  .chat-list-head .filter button.active {
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+  }
+  .chat-row {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(30, 58, 95, 0.06);
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    transition: background 0.12s;
+  }
+  .chat-row:hover { background: var(--row-hover); }
+  .chat-row.active { background: rgba(59, 130, 246, 0.10); border-left: 3px solid var(--blue); padding-left: 13px; }
+  .chat-row .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--sky));
+    color: #fff;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+  }
+  .chat-row .info { flex: 1; min-width: 0; }
+  .chat-row .info .name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-row .info .last { font-size: 12px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chat-row .meta { font-size: 11px; color: var(--text-3); text-align: right; }
+  .chat-row .meta .badge-unread {
+    display: inline-block;
+    background: var(--red);
+    color: #fff;
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-top: 4px;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.40);
+  }
+
+  .chat-thread {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface-2);
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+  .chat-thread-head {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .chat-thread-head .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--sky));
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+  }
+  .chat-thread-head .who .name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .chat-thread-head .who .meta { font-size: 11px; color: var(--text-3); }
+
+  .chat-msgs {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .msg {
+    max-width: 70%;
+    padding: 9px 13px;
+    border-radius: 14px;
+    font-size: 13.5px;
+    line-height: 1.45;
+    word-wrap: break-word;
+  }
+  .msg .at { display: block; font-size: 10px; opacity: 0.55; margin-top: 4px; }
+  .msg.customer {
+    align-self: flex-start;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.admin {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.system {
+    align-self: center;
+    background: rgba(245, 158, 11, 0.12);
+    color: #B45309;
+    border: 1px dashed rgba(245, 158, 11, 0.4);
+    font-size: 12px;
+    font-style: italic;
+    max-width: 80%;
+    text-align: center;
+  }
+  html[data-theme="dark"] .msg.system { color: #FCD34D; background: rgba(245, 158, 11, 0.18); }
+
+  .chat-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    color: var(--text-3);
+    text-align: center;
+    padding: 40px;
+    gap: 10px;
+  }
+  .chat-empty svg { width: 56px; height: 56px; stroke: var(--text-3); fill: none; stroke-width: 1.5; opacity: 0.4; }
+
+  .chat-reply {
+    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    background: var(--surface-2);
+    background: var(--surface);
+  }
+  .chat-reply input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font: inherit;
+    font-size: 14px;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+  }
+  .chat-reply input:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+  .chat-reply button {
+    padding: 0 16px;
+    border: none;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    border-radius: 12px;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chat-reply button:hover { transform: translateY(-1px); }
+  .chat-reply button svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+
+  /* ---------- Search dropdown (topbar) ---------- */
+  .search { position: relative; }
+  .search-results {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+    max-height: 380px;
+    overflow-y: auto;
+    z-index: 60;
+    display: none;
+  }
+  .search-results.open { display: block; }
+  .search-results .item {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(30, 58, 95, 0.06);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.12s;
+  }
+  .search-results .item:last-child { border-bottom: none; }
+  .search-results .item:hover { background: rgba(59, 130, 246, 0.06); }
+  .search-results .item .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-weight: 700;
+    color: var(--blue);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .search-results .item .desc { flex: 1; font-size: 13px; color: var(--text); }
+  .search-results .item .desc .meta { font-size: 11px; color: var(--text-3); }
+  .search-results .empty { padding: 16px; text-align: center; color: var(--text-3); font-size: 13px; }
+
+  /* ---------- KTV workload widget ---------- */
+  .tech-workload {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .tech-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+    cursor: pointer;
+  }
+  .tech-row:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+    border-color: var(--blue);
+  }
+  .tech-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+  }
+  .tech-info { flex: 1; min-width: 0; }
+  .tech-name { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tech-role { font-size: 11px; color: var(--text-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tech-count {
+    flex-shrink: 0;
+    background: rgba(37, 99, 235, 0.10);
+    color: var(--blue);
+    font-weight: 800;
+    font-size: 15px;
+    min-width: 36px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tech-count.zero { background: rgba(100, 116, 139, 0.10); color: var(--text-3); }
+  .tech-count.heavy { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+  .tech-count.overload { background: rgba(220, 38, 38, 0.12); color: var(--red); }
+
+  /* ---------- Payment pane ---------- */
+  .pay-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+  .pay-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .pay-stat::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--blue), var(--sky));
+  }
+  .pay-stat-label {
+    font-size: 12px;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .pay-stat-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .pay-stat-meta {
+    font-size: 12px;
+    color: var(--text-2);
+    margin-top: 4px;
+  }
+  .pay-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pay-status-badge.paid { background: rgba(34, 197, 94, 0.10); color: #15803d; }
+  .pay-status-badge.pending { background: rgba(245, 158, 11, 0.12); color: #b45309; }
+  .pay-status-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  .pay-method-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(37, 99, 235, 0.08);
+    color: var(--blue);
+  }
+
+  /* Payment modal form */
+  .pay-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .pay-form-row.single { grid-template-columns: 1fr; }
+  .pay-field { display: flex; flex-direction: column; gap: 6px; }
+  .pay-field label {
+    font-size: 12px;
+    color: var(--text-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .pay-field input, .pay-field select, .pay-field textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 14px;
+    background: #fff;
+    outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .pay-field input:focus, .pay-field select:focus, .pay-field textarea:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  }
+  .pay-method-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .pay-method-opt {
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    cursor: pointer;
+    text-align: center;
+    background: #fff;
+    transition: all .15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .pay-method-opt svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .pay-method-opt:hover { border-color: var(--sky); }
+  .pay-method-opt.selected { border-color: var(--blue); background: rgba(37, 99, 235, 0.06); color: var(--blue); }
+  .pay-summary {
+    background: rgba(37, 99, 235, 0.04);
+    border: 1px dashed rgba(37, 99, 235, 0.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 6px;
+  }
+  .pay-sum-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 14px;
+  }
+  .pay-sum-row.total {
+    border-top: 1px solid rgba(37, 99, 235, 0.2);
+    margin-top: 6px;
+    padding-top: 12px;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--blue);
+  }
+  .pay-sum-row .k { color: var(--text-2); }
+  .pay-sum-row .v { color: var(--text); font-weight: 600; }
+
+  /* Dark mode overrides */
+  [data-theme="dark"] .pay-field input,
+  [data-theme="dark"] .pay-field select,
+  [data-theme="dark"] .pay-field textarea,
+  [data-theme="dark"] .pay-method-opt {
+    background: var(--surface-2, #1e293b);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  [data-theme="dark"] .pay-method-opt.selected { background: rgba(37, 99, 235, 0.18); }
+  [data-theme="dark"] .pay-summary { background: rgba(37, 99, 235, 0.10); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1100px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .pay-stats { grid-template-columns: 1fr; }
+    .pay-method-grid { grid-template-columns: 1fr; }
+    .pay-form-row { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; grid-template-areas: "topbar" "main"; }
+    .sidebar { display: none; }
+    .form-grid { grid-template-columns: 1fr; }
+    .check-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-bg-mesh" aria-hidden="true"></div>
+
+<div class="app">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+    <a href="index.html" class="sidebar-brand" aria-label="FFC — Fix Fast Center">
+      <img src="assets/images/logo-ffc.png?v=2" alt="FFC — Fix Fast Center" />
+    </a>
+
+    <div class="nav-section-title" data-i18n="dash.section.ops">Vận hành</div>
+    <ul class="nav-list">
+      <li><a href="#dashboard" data-pane="dashboard" class="active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+        <span data-i18n="dash.nav.dashboard">Tổng quan</span>
+      </a></li>
+      <li data-tech-hide><a href="#intake" data-pane="intake">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        <span data-i18n="dash.nav.intake">Tiếp nhận máy</span>
+      </a></li>
+      <li><a href="#tickets" data-pane="tickets">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>
+        <span data-i18n="dash.nav.tickets">Phiếu sửa chữa</span>
+        <span class="nav-badge" id="urgentBadge">3</span>
+      </a></li>
+      <li data-tech-hide><a href="#customers" data-pane="customers">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span data-i18n="dash.nav.customers">Khách hàng</span>
+      </a></li>
+      <li><a href="#support" data-pane="support">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span data-i18n="dash.nav.support">Chat hỗ trợ</span>
+        <span class="nav-badge" id="supportBadge" style="display:none">0</span>
+      </a></li>
+      <li data-tech-hide><a href="#inventory" data-pane="inventory">
+        <svg viewBox="0 0 24 24"><path d="M21 8V5a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 5v14a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 19v-3"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span data-i18n="dash.nav.inventory">Kho linh kiện</span>
+      </a></li>
+      <li data-tech-hide><a href="#payment" data-pane="payment">
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        <span data-i18n="dash.nav.payment">Thanh toán</span>
+      </a></li>
+    </ul>
+
+    <div class="nav-section-title" data-tech-hide data-i18n="dash.section.mgmt">Quản lý</div>
+    <ul class="nav-list" data-tech-hide>
+      <li><a href="#staff" data-pane="staff">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg>
+        <span data-i18n="dash.nav.staff">Nhân viên & ca làm</span>
+      </a></li>
+      <li><a href="#reports" data-pane="reports">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span data-i18n="dash.nav.reports">Báo cáo & thống kê</span>
+      </a></li>
+      <li><a href="#settings" data-pane="settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span data-i18n="dash.nav.settings">Cài đặt</span>
+      </a></li>
+    </ul>
+
+    <div class="sidebar-foot">
+      <div class="avatar" id="userInitials">AD</div>
+      <div class="who">
+        <div class="name" id="userName" data-i18n="dash.user.name">Admin FFC</div>
+        <div class="role" data-i18n="dash.user.role">Kỹ thuật viên</div>
+      </div>
+      <button onclick="logout()" title="Đăng xuất">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========== TOPBAR ========== -->
+  <header class="topbar">
+    <h1 id="paneTitle">Tổng quan <span class="sub" id="paneSubtitle">Bảng điều khiển vận hành</span></h1>
+    <div class="grow"></div>
+
+    <div class="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="topSearch" type="text" autocomplete="off" placeholder="Tìm phiếu, khách hàng, SĐT..." data-i18n-attr="placeholder:dash.search.placeholder" />
+      <div class="search-results" id="topSearchResults"></div>
+    </div>
+
+    <button class="icon-btn" id="themeToggle" title="Đổi giao diện sáng/tối" onclick="toggleTheme()">
+      <svg id="themeIconSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/></svg>
+      <svg id="themeIconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+
+    <button class="icon-btn" id="notifBtn" title="Thông báo" onclick="toggleNotifPanel(event)" style="position:relative;">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="dot" id="notifDot" style="display:none;"></span>
+      <span class="notif-badge" id="notifBadge" style="display:none;">0</span>
+    </button>
+
+    <!-- Notification dropdown panel -->
+    <div class="notif-panel" id="notifPanel" style="display:none;">
+      <div class="notif-head">
+        <strong>Thông báo</strong>
+        <button class="notif-mark-all" id="notifMarkAll">Đánh dấu đã đọc</button>
+      </div>
+      <div class="notif-list" id="notifList">
+        <div class="notif-empty">Đang tải...</div>
+      </div>
+    </div>
+
+    <button class="primary" data-tech-hide onclick="goPane('intake')">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      <span data-i18n="dash.btn.new_intake">Tiếp nhận</span>
+    </button>
+  </header>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="main">
+
+    <!-- ============ PANE: DASHBOARD ============ -->
+    <section class="pane active" id="pane-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="ic blue"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div>
+            <div class="val">14</div>
+            <div class="lbl" data-i18n="dash.kpi.today">Phiếu hôm nay</div>
+            <div class="delta" data-i18n="dash.kpi.today.delta">↑ 3 so với hôm qua</div>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="ic amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div>
+            <div class="val">8</div>
+            <div class="lbl" data-i18n="dash.kpi.inprog">Đang xử lý</div>
+            <div class="delta down" data-i18n="dash.kpi.inprog.delta">↓ 2 từ sáng</div>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="ic green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div>
+            <div class="val">6</div>
+            <div class="lbl" data-i18n="dash.kpi.done">Đã hoàn thành</div>
+            <div class="delta" data-i18n="dash.kpi.done.delta">↑ 4 hôm nay</div>
+          </div>
+        </div>
+        <div class="kpi">
+          <div class="ic purple"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div>
+            <div class="val" style="font-size:20px; white-space:nowrap;">12.400.000 ₫</div>
+            <div class="lbl" data-i18n="dash.kpi.revenue">Doanh thu hôm nay</div>
+            <div class="delta" data-i18n="dash.kpi.revenue.delta">↑ 18% tuần này</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3><span data-i18n="dash.recent.title">Phiếu mới gần đây</span> <span class="small" data-i18n="dash.recent.updated">cập nhật 2 phút trước</span></h3>
+          <div class="table-wrap">
+            <table class="t" id="dashTable">
+              <thead>
+                <tr>
+                  <th data-i18n="dash.recent.col.code">Mã phiếu</th>
+                  <th data-i18n="dash.recent.col.customer">Khách hàng</th>
+                  <th data-i18n="dash.recent.col.device">Thiết bị</th>
+                  <th data-i18n="dash.recent.col.status">Trạng thái</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody><!-- filled by JS --></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><span data-i18n="dash.activity.title">Hoạt động hôm nay</span></h3>
+          <div style="display:grid; gap: 14px;">
+            <div style="display:flex; gap:12px;">
+              <div style="width:36px; height:36px; border-radius:10px; background:rgba(22,163,74,0.12); color:var(--green); display:flex; align-items:center; justify-content:center;">✓</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:600;">FFC-0089 đã hoàn thành</div>
+                <div style="font-size:12px; color:var(--text-3);">iPhone 14 — Thay pin · 8 phút trước</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="width:36px; height:36px; border-radius:10px; background:rgba(37,99,235,0.12); color:var(--blue); display:flex; align-items:center; justify-content:center;">⚙</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:600;">FFC-0092 đang sửa</div>
+                <div style="font-size:12px; color:var(--text-3);">MacBook Pro — Chẩn đoán main · 22 phút trước</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="width:36px; height:36px; border-radius:10px; background:rgba(245,158,11,0.15); color:var(--amber); display:flex; align-items:center; justify-content:center;">+</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:600;">Tiếp nhận FFC-0094</div>
+                <div style="font-size:12px; color:var(--text-3);">Samsung S24 — Vỡ màn · 41 phút trước</div>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <div style="width:36px; height:36px; border-radius:10px; background:rgba(124,58,237,0.12); color:var(--purple); display:flex; align-items:center; justify-content:center;">$</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:600;">Thanh toán FFC-0085</div>
+                <div style="font-size:12px; color:var(--text-3);">1.250.000₫ — VietQR · 1 giờ trước</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khối lượng việc của KTV -->
+      <div class="card" style="margin-top: 18px;">
+        <h3>
+          <span data-i18n="dash.workload.title">Khối lượng việc của KTV</span>
+          <span class="small" data-i18n="dash.workload.sub">Phiếu đang xử lý (chờ / đang sửa / test)</span>
+        </h3>
+        <div id="techWorkload" class="tech-workload"></div>
+      </div>
+    </section>
+
+    <!-- ============ PANE: INTAKE ============ -->
+    <section class="pane" id="pane-intake">
+      <div class="card">
+        <h3><span data-i18n="dash.intake.heading">Phiếu tiếp nhận mới</span> <span class="small"><span data-i18n="dash.intake.code">Mã tự sinh</span>: <strong id="intakeCode">FFC-0095</strong></span></h3>
+
+        <form id="intakeForm" onsubmit="submitIntake(event)" class="form-grid">
+
+          <!-- Customer -->
+          <div class="field">
+            <label><span data-i18n="dash.intake.customer">Tên khách hàng</span> <span class="req">*</span></label>
+            <input type="text" name="customer" required placeholder="Nguyễn Văn A" />
+          </div>
+          <div class="field">
+            <label><span data-i18n="dash.intake.phone">Số điện thoại</span> <span class="req">*</span></label>
+            <input type="tel" name="phone" required placeholder="0912 345 678" />
+          </div>
+
+          <!-- Device -->
+          <div class="field">
+            <label><span data-i18n="dash.intake.deviceType">Loại thiết bị</span> <span class="req">*</span></label>
+            <select name="deviceType" required>
+              <option value="" data-i18n="dash.intake.choose">-- Chọn --</option>
+              <option>iPhone</option>
+              <option>Android (Samsung/Xiaomi/Oppo)</option>
+              <option>MacBook</option>
+              <option>Laptop Windows</option>
+              <option>iPad / Tablet</option>
+              <option>PC / Workstation</option>
+              <option>Khác</option>
+            </select>
+          </div>
+          <div class="field">
+            <label><span data-i18n="dash.intake.model">Hãng & model</span> <span class="req">*</span></label>
+            <input type="text" name="model" required placeholder="VD: iPhone 14 Pro Max 256GB" />
+          </div>
+
+          <div class="field">
+            <label data-i18n="dash.intake.imei">IMEI / Serial</label>
+            <input type="text" name="imei" placeholder="Tuỳ chọn — để trống nếu không xác định" data-i18n-attr="placeholder:dash.intake.imei.hint" />
+          </div>
+          <div class="field">
+            <label data-i18n="dash.intake.color">Màu sắc / đặc điểm nhận dạng</label>
+            <input type="text" name="color" placeholder="VD: Đen — móp góc phải" data-i18n-attr="placeholder:dash.intake.color.hint" />
+          </div>
+
+          <!-- Issue -->
+          <div class="field full">
+            <label><span data-i18n="dash.intake.issue">Mô tả lỗi</span> <span class="req">*</span></label>
+            <textarea name="issue" required placeholder="Khách báo lỗi gì? Tình trạng hiện tại?" data-i18n-attr="placeholder:dash.intake.issue.hint"></textarea>
+          </div>
+
+          <!-- Accessories check -->
+          <div class="field full">
+            <label data-i18n="dash.intake.accessories">Phụ kiện đi kèm (tick tất cả phù hợp)</label>
+            <div class="check-grid">
+              <label><input type="checkbox" name="acc" value="charger" /> <span data-i18n="dash.intake.acc.charger">Sạc</span></label>
+              <label><input type="checkbox" name="acc" value="cable" /> <span data-i18n="dash.intake.acc.cable">Cáp</span></label>
+              <label><input type="checkbox" name="acc" value="case" /> <span data-i18n="dash.intake.acc.case">Ốp lưng</span></label>
+              <label><input type="checkbox" name="acc" value="screen" /> <span data-i18n="dash.intake.acc.screen">Cường lực</span></label>
+              <label><input type="checkbox" name="acc" value="sim" /> <span data-i18n="dash.intake.acc.sim">Khay SIM</span></label>
+              <label><input type="checkbox" name="acc" value="box" /> <span data-i18n="dash.intake.acc.box">Hộp + phụ kiện gốc</span></label>
+            </div>
+          </div>
+
+          <!-- Quote + ETA -->
+          <div class="field">
+            <label data-i18n="dash.intake.quote">Báo giá tham khảo (₫)</label>
+            <input type="number" name="quote" placeholder="0" min="0" step="10000" />
+          </div>
+          <div class="field">
+            <label data-i18n="dash.intake.dueDate">Ngày dự kiến trả máy</label>
+            <input type="date" name="dueDate" />
+          </div>
+
+          <!-- Assign -->
+          <div class="field">
+            <label data-i18n="dash.intake.assignee">Phân công kỹ thuật viên</label>
+            <select name="assignee" id="intakeAssignee">
+              <option value="" data-i18n="dash.intake.assignee.none">-- Chưa phân --</option>
+            </select>
+          </div>
+          <div class="field">
+            <label data-i18n="dash.intake.priority">Mức độ ưu tiên</label>
+            <select name="priority">
+              <option data-i18n="dash.intake.priority.normal">Bình thường</option>
+              <option data-i18n="dash.intake.priority.urgent">Gấp</option>
+              <option data-i18n="dash.intake.priority.vip">VIP</option>
+            </select>
+          </div>
+
+          <div class="field full">
+            <label data-i18n="dash.intake.note">Ghi chú nội bộ</label>
+            <textarea name="note" placeholder="Ghi chú riêng cho kỹ thuật viên, không hiển thị cho khách" data-i18n-attr="placeholder:dash.intake.note.hint"></textarea>
+          </div>
+
+          <div class="form-actions full">
+            <button type="button" class="btn btn-ghost" onclick="resetIntake()" data-i18n="dash.intake.cancel">Huỷ</button>
+            <button type="submit" class="btn btn-primary">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              <span data-i18n="dash.intake.submit">Tạo phiếu & in QR</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ PANE: TICKETS ============ -->
+    <section class="pane" id="pane-tickets">
+      <div class="toolbar">
+        <div class="filters" id="ticketFilters">
+          <button class="active" data-filter="all"><span data-i18n="dash.tickets.filter.all">Tất cả</span> <span id="cf-all">12</span></button>
+          <button data-filter="waiting"><span data-i18n="dash.tickets.filter.waiting">Chờ</span> <span id="cf-waiting">3</span></button>
+          <button data-filter="in-progress"><span data-i18n="dash.tickets.filter.in-progress">Đang sửa</span> <span id="cf-in-progress">5</span></button>
+          <button data-filter="testing"><span data-i18n="dash.tickets.filter.testing">Test</span> <span id="cf-testing">2</span></button>
+          <button data-filter="done"><span data-i18n="dash.tickets.filter.done">Xong</span> <span id="cf-done">2</span></button>
+          <button data-filter="delivered"><span data-i18n="dash.tickets.filter.delivered">Đã giao</span> <span id="cf-delivered">0</span></button>
+        </div>
+        <select id="techFilter" style="height:36px; padding:0 12px; border:1px solid var(--border); border-radius:10px; background:#fff; font:inherit; font-size:13px; color:var(--text); outline:none; cursor:pointer;">
+          <option value="" data-i18n="dash.tickets.filter.allTech">Tất cả KTV</option>
+        </select>
+        <div class="grow"></div>
+        <button class="btn btn-ghost" onclick="alert('Xuất Excel — đang phát triển')" data-i18n="dash.tickets.export">Xuất Excel</button>
+        <button class="btn btn-primary" onclick="goPane('intake')" data-i18n="dash.tickets.new">+ Phiếu mới</button>
+      </div>
+
+      <div class="card" style="padding: 0;">
+        <div class="table-wrap">
+          <table class="t" id="ticketsTable">
+            <thead>
+              <tr>
+                <th data-i18n="dash.tickets.col.code">Mã</th>
+                <th data-i18n="dash.tickets.col.customer">Khách hàng</th>
+                <th data-i18n="dash.tickets.col.device">Thiết bị / Lỗi</th>
+                <th data-i18n="dash.tickets.col.tech">KTV</th>
+                <th data-i18n="dash.tickets.col.intake">Tiếp nhận</th>
+                <th data-i18n="dash.tickets.col.quote">Báo giá</th>
+                <th data-i18n="dash.tickets.col.status">Trạng thái</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STUB PANES (skeleton, ready for fill) ============ -->
+    <section class="pane" id="pane-customers">
+      <div class="toolbar">
+        <div class="search" style="flex: 0 1 360px; position: relative;">
+          <svg viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:var(--text-3); fill:none; stroke-width:2;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="custSearch" type="text" placeholder="Tìm theo tên, SĐT..." data-i18n-attr="placeholder:dash.cust.search" style="width:100%; height:40px; padding:0 14px 0 40px; border:1px solid var(--border); border-radius:12px; background:#fff; font:inherit; font-size:14px; outline:none;" />
+        </div>
+        <div class="grow"></div>
+        <button class="btn btn-primary" onclick="openCustomerModal()" data-i18n="dash.cust.new">+ Khách hàng mới</button>
+      </div>
+
+      <div class="card" style="padding: 0;">
+        <div class="table-wrap">
+          <table class="t" id="customersTable">
+            <thead>
+              <tr>
+                <th data-i18n="dash.cust.col.name">Tên khách hàng</th>
+                <th data-i18n="dash.cust.col.phone">SĐT</th>
+                <th data-i18n="dash.cust.col.tickets">Số phiếu</th>
+                <th data-i18n="dash.cust.col.last">Lần gần nhất</th>
+                <th data-i18n="dash.cust.col.total">Tổng chi</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANE: CHAT SUPPORT ============ -->
+    <section class="pane" id="pane-support">
+      <div class="chat-shell">
+        <aside class="chat-list">
+          <div class="chat-list-head">
+            <h3 data-i18n="dash.chat.list_title">Hộp thư</h3>
+            <div class="filter" id="chatFilter">
+              <button class="active" data-filter="all" data-i18n="dash.chat.filter.all">Tất cả</button>
+              <button data-filter="unread" data-i18n="dash.chat.filter.unread">Chưa đọc</button>
+            </div>
+          </div>
+          <div id="chatList" style="flex:1; overflow-y:auto;"></div>
+        </aside>
+        <main class="chat-thread" id="chatThread">
+          <div class="chat-empty" id="chatEmpty">
+            <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div data-i18n="dash.chat.empty">Chọn một cuộc trò chuyện để bắt đầu trả lời</div>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-inventory">
+      <div class="card">
+        <div class="card-head" style="display:flex; align-items:center; gap:12px;">
+          <h2 style="margin:0;">Kho linh kiện</h2>
+          <span class="muted" id="partsCount" style="font-size:13px;"></span>
+          <div class="grow"></div>
+          <button class="btn btn-ghost" onclick="loadParts()">↻ Làm mới</button>
+          <button class="btn btn-primary" onclick="openAddPartModal()">+ Thêm linh kiện</button>
+        </div>
+
+        <!-- Stats: total + low-stock count -->
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-top:14px;">
+          <div style="background:rgba(37,99,235,0.08); border-radius:10px; padding:14px;">
+            <div style="font-size:12px; color:var(--text-2);">Tổng SKU</div>
+            <div style="font-size:24px; font-weight:800; color:var(--blue);" id="parts-total">—</div>
+          </div>
+          <div style="background:rgba(220,38,38,0.08); border-radius:10px; padding:14px;">
+            <div style="font-size:12px; color:var(--text-2);">Sắp hết hàng</div>
+            <div style="font-size:24px; font-weight:800; color:#dc2626;" id="parts-lowstock">—</div>
+          </div>
+          <div style="background:rgba(22,163,74,0.08); border-radius:10px; padding:14px;">
+            <div style="font-size:12px; color:var(--text-2);">Giá trị tồn kho</div>
+            <div style="font-size:24px; font-weight:800; color:#16a34a;" id="parts-value">—</div>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:16px;">
+          <table class="data-table">
+            <thead><tr>
+              <th>Mã / Tên linh kiện</th>
+              <th>Loại máy</th>
+              <th>Tồn kho</th>
+              <th>Min</th>
+              <th>Giá vốn</th>
+              <th>Giá bán</th>
+              <th>Trạng thái</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="partsTbody"><tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-3);">Đang tải...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PANE: PAYMENT ============ -->
+    <section class="pane" id="pane-payment">
+      <div class="pay-stats">
+        <div class="pay-stat">
+          <div class="pay-stat-label" data-i18n="dash.payment.stat.pending">Chờ thu</div>
+          <div class="pay-stat-value" id="payStatPending">0</div>
+          <div class="pay-stat-meta" id="payStatPendingMeta">0₫</div>
+        </div>
+        <div class="pay-stat">
+          <div class="pay-stat-label" data-i18n="dash.payment.stat.today">Đã thu hôm nay</div>
+          <div class="pay-stat-value" id="payStatToday">0</div>
+          <div class="pay-stat-meta" id="payStatTodayMeta">0₫</div>
+        </div>
+        <div class="pay-stat">
+          <div class="pay-stat-label" data-i18n="dash.payment.stat.total">Tổng doanh thu</div>
+          <div class="pay-stat-value" id="payStatTotal">0₫</div>
+          <div class="pay-stat-meta" id="payStatTotalMeta">0 hoá đơn</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filters" id="paymentFilters">
+          <button class="active" data-pfilter="pending"><span data-i18n="dash.payment.filter.pending">Chờ thu</span> <span id="pf-pending">0</span></button>
+          <button data-pfilter="paid"><span data-i18n="dash.payment.filter.paid">Đã thu</span> <span id="pf-paid">0</span></button>
+          <button data-pfilter="all"><span data-i18n="dash.payment.filter.all">Tất cả</span> <span id="pf-all">0</span></button>
+        </div>
+        <div class="grow"></div>
+        <div class="search" style="flex: 0 1 280px; position: relative;">
+          <svg viewBox="0 0 24 24" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:var(--text-3); fill:none; stroke-width:2;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="paySearch" type="text" placeholder="Tìm mã phiếu, tên KH..." data-i18n-attr="placeholder:dash.payment.search" style="width:100%; height:40px; padding:0 14px 0 40px; border:1px solid var(--border); border-radius:12px; background:#fff; font:inherit; font-size:14px; outline:none;" />
+        </div>
+      </div>
+
+      <div class="card" style="padding: 0;">
+        <div class="table-wrap">
+          <table class="t" id="paymentTable">
+            <thead>
+              <tr>
+                <th data-i18n="dash.tickets.col.code">Mã</th>
+                <th data-i18n="dash.tickets.col.customer">Khách hàng</th>
+                <th data-i18n="dash.recent.col.device">Thiết bị</th>
+                <th data-i18n="dash.tickets.col.tech">KTV</th>
+                <th data-i18n="dash.payment.col.amount">Số tiền</th>
+                <th data-i18n="dash.payment.col.status">Trạng thái</th>
+                <th data-i18n="dash.payment.col.method">Hình thức</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-staff">
+      <div class="card">
+        <div class="card-head" style="display:flex; align-items:center; gap:12px;">
+          <h2 style="margin:0;">Đội ngũ kỹ thuật viên</h2>
+          <span class="muted" id="staffCount" style="font-size:13px;"></span>
+          <div class="grow"></div>
+          <button class="btn btn-primary" onclick="openAddStaffModal()">+ Thêm KTV</button>
+        </div>
+        <div class="table-wrap" style="margin-top:14px;">
+          <table class="data-table">
+            <thead><tr>
+              <th>KTV</th>
+              <th>Chuyên môn</th>
+              <th>Đang xử lý</th>
+              <th>Ngày vào làm</th>
+              <th>Trạng thái</th>
+              <th></th>
+            </tr></thead>
+            <tbody id="staffTbody"><tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-3);">Đang tải...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REPORTS PANE ============ -->
+    <section class="pane" id="pane-reports">
+      <div class="card">
+        <div class="card-head" style="display:flex; align-items:center; gap:12px;">
+          <h2 style="margin:0;">Báo cáo & thống kê</h2>
+          <div class="grow"></div>
+          <button class="btn btn-ghost" onclick="loadReports()">↻ Làm mới</button>
+        </div>
+
+        <!-- KPI cards -->
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:16px;" id="reportKPIs">
+          <div class="rp-kpi" style="background:rgba(37,99,235,0.08); border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:var(--text-2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Phiếu hôm nay</div>
+            <div style="font-size:28px; font-weight:800; color:var(--blue); margin-top:6px;" id="rp-tickets-today">—</div>
+          </div>
+          <div class="rp-kpi" style="background:rgba(22,163,74,0.08); border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:var(--text-2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Doanh thu hôm nay</div>
+            <div style="font-size:28px; font-weight:800; color:#16a34a; margin-top:6px;" id="rp-revenue-today">—</div>
+          </div>
+          <div class="rp-kpi" style="background:rgba(234,88,12,0.08); border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:var(--text-2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Đang xử lý</div>
+            <div style="font-size:28px; font-weight:800; color:#ea580c; margin-top:6px;" id="rp-in-progress">—</div>
+          </div>
+          <div class="rp-kpi" style="background:rgba(147,51,234,0.08); border-radius:12px; padding:18px;">
+            <div style="font-size:12px; color:var(--text-2); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Chờ thanh toán</div>
+            <div style="font-size:28px; font-weight:800; color:#9333ea; margin-top:6px;" id="rp-pending-pay">—</div>
+            <div style="font-size:11px; color:var(--text-3); margin-top:2px;" id="rp-pending-pay-amt"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2 columns: status breakdown + top KTV -->
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:14px;">
+        <div class="card">
+          <div class="card-head"><h2 style="margin:0; font-size:16px;">Phiếu theo trạng thái</h2></div>
+          <div id="rp-status-list" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2 style="margin:0; font-size:16px;">Top KTV (theo doanh thu)</h2></div>
+          <div id="rp-tech-list" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
+        </div>
+      </div>
+
+      <!-- Top devices -->
+      <div class="card" style="margin-top:14px;">
+        <div class="card-head"><h2 style="margin:0; font-size:16px;">Thiết bị sửa nhiều nhất</h2></div>
+        <div id="rp-device-list" style="margin-top:14px; display:flex; flex-direction:column; gap:8px;"></div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS PANE ============ -->
+    <section class="pane" id="pane-settings">
+      <div class="card">
+        <div class="card-head"><h2 style="margin:0;">Cài đặt tài khoản</h2></div>
+        <div id="settingsCurrentUser" style="margin-top:14px; padding:14px; background:rgba(37,99,235,0.05); border-radius:10px; font-size:14px;"></div>
+
+        <h3 style="margin:24px 0 12px; font-size:15px;">Đổi mật khẩu</h3>
+        <form id="changePwdForm" onsubmit="event.preventDefault(); submitChangePassword();" style="display:flex; flex-direction:column; gap:12px; max-width:420px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Mật khẩu hiện tại</label>
+            <input name="current_password" type="password" required class="input" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Mật khẩu mới (≥ 6 ký tự)</label>
+            <input name="new_password" type="password" required minlength="6" class="input" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Xác nhận mật khẩu mới</label>
+            <input name="confirm_password" type="password" required class="input" style="margin-top:6px;" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Cập nhật mật khẩu</button>
+        </form>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <div class="card-head"><h2 style="margin:0;">Thông tin hệ thống</h2></div>
+        <div style="margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:13px;">
+          <div><strong>Tên hệ thống:</strong> FFC (Fix Fast Center)</div>
+          <div><strong>Phiên bản:</strong> 1.0.0</div>
+          <div><strong>Backend:</strong> Node.js + Express + SQLite</div>
+          <div><strong>Địa chỉ:</strong> 227 Nguyễn Văn Cừ, Q.5, TP.HCM</div>
+          <div><strong>Hotline:</strong> 1900-xxxx</div>
+          <div><strong>Email:</strong> support@ffc.vn</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ MODAL: TICKET DETAIL ============ -->
+<div class="modal-backdrop" id="ticketModal" onclick="if (event.target === this) closeModal('ticketModal')">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tm-code">
+    <div class="modal-head">
+      <span class="code" id="tm-code">FFC-0000</span>
+      <span class="badge" id="tm-badge"><span class="dot"></span><span id="tm-badge-label">—</span></span>
+      <div class="grow"></div>
+      <button class="close" onclick="closeModal('ticketModal')" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="status-line" id="tm-timeline"></div>
+
+      <div class="info-grid">
+        <div class="item"><div class="k" data-i18n="dash.cust.col.name">Tên khách hàng</div><div class="v" id="tm-customer">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.cust.col.phone">SĐT</div><div class="v" id="tm-phone">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.recent.col.device">Thiết bị</div><div class="v" id="tm-device">—</div></div>
+        <div class="item">
+          <div class="k" data-i18n="dash.tickets.col.tech">KTV</div>
+          <div class="v">
+            <select id="tm-tech-select" onchange="assignTechnician(this.value)"
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:14px;">
+              <option value="">— Chưa phân —</option>
+            </select>
+          </div>
+        </div>
+        <div class="item full"><div class="k" data-i18n="dash.intake.issue">Mô tả lỗi</div><div class="v" id="tm-issue">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.tickets.col.intake">Tiếp nhận</div><div class="v" id="tm-date">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.tickets.col.quote">Báo giá</div><div class="v" id="tm-quote">—</div></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('ticketModal')" data-i18n="dash.modal.close">Đóng</button>
+      <button class="btn btn-ghost" onclick="alert('In QR — đang phát triển')" data-i18n="dash.modal.print">In QR</button>
+      <button class="btn btn-primary" id="tm-advance" data-i18n="dash.modal.advance">Chuyển trạng thái →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: CUSTOMER DETAIL (history) ============ -->
+<div class="modal-backdrop" id="customerModal" onclick="if (event.target === this) closeModal('customerModal')">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <span class="code" id="cm-name">—</span>
+      <span style="font-size:13px; color:var(--text-2);" id="cm-phone">—</span>
+      <div class="grow"></div>
+      <button class="close" onclick="closeModal('customerModal')" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Thông tin cá nhân -->
+      <h4 style="font-size:13px; color:var(--text-2); margin:0 0 10px; text-transform:uppercase; letter-spacing:0.5px;">Thông tin cá nhân</h4>
+      <div class="info-grid" style="margin-bottom:18px;">
+        <div class="item"><div class="k">Email</div><div class="v" id="cm-email">—</div></div>
+        <div class="item"><div class="k">Địa chỉ</div><div class="v" id="cm-address">—</div></div>
+        <div class="item"><div class="k">Ngày sinh</div><div class="v" id="cm-birthday">—</div></div>
+        <div class="item"><div class="k">Giới tính</div><div class="v" id="cm-gender">—</div></div>
+        <div class="item full"><div class="k">Ngày tạo tài khoản</div><div class="v" id="cm-createdAt">—</div></div>
+      </div>
+
+      <!-- Stats -->
+      <h4 style="font-size:13px; color:var(--text-2); margin:0 0 10px; text-transform:uppercase; letter-spacing:0.5px;">Thống kê</h4>
+      <div class="info-grid" style="margin-bottom:18px;">
+        <div class="item"><div class="k" data-i18n="dash.cust.col.tickets">Số phiếu</div><div class="v" id="cm-count">—</div></div>
+        <div class="item"><div class="k">Đã hoàn thành</div><div class="v" id="cm-completed">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.cust.col.total">Tổng chi</div><div class="v" id="cm-total" style="color:var(--blue); font-weight:800;">—</div></div>
+        <div class="item"><div class="k">Lần ghé gần nhất</div><div class="v" id="cm-lastVisit">—</div></div>
+      </div>
+
+      <h4 style="font-size:13px; color:var(--text-2); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px;" data-i18n="dash.cust.history">Lịch sử sửa chữa</h4>
+      <div class="table-wrap">
+        <table class="t" id="cm-history">
+          <thead>
+            <tr>
+              <th data-i18n="dash.tickets.col.code">Mã</th>
+              <th data-i18n="dash.recent.col.device">Thiết bị</th>
+              <th data-i18n="dash.tickets.col.intake">Tiếp nhận</th>
+              <th data-i18n="dash.tickets.col.quote">Báo giá</th>
+              <th data-i18n="dash.tickets.col.status">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('customerModal')" data-i18n="dash.modal.close">Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: ADD/EDIT STAFF (KTV) ============ -->
+<div class="modal-backdrop" id="staffModal" onclick="if (event.target === this) closeModal('staffModal')">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <span class="code" id="sm-title">Thêm KTV</span>
+      <div class="grow"></div>
+      <button class="close" onclick="closeModal('staffModal')" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="staffForm" onsubmit="event.preventDefault(); submitStaff();" style="display:flex; flex-direction:column; gap:14px;">
+        <input type="hidden" name="id" />
+        <div>
+          <label style="font-size:12px; color:var(--text-2); font-weight:600;">Họ tên *</label>
+          <input name="name" required class="input" placeholder="VD: Nguyễn Văn A" style="margin-top:6px;" />
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-2); font-weight:600;">Chuyên môn</label>
+          <input name="specialty" class="input" placeholder="VD: iPhone, Laptop, Main..." style="margin-top:6px;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Màu nhận diện</label>
+            <input name="color" type="color" value="#2563eb" class="input" style="margin-top:6px; padding:4px; height:40px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Ngày vào làm</label>
+            <input name="hire_date" type="date" class="input" style="margin-top:6px;" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('staffModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="submitStaff()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: PAYMENT ============ -->
+<!-- ============ MODAL: ADD/EDIT PART ============ -->
+<div class="modal-backdrop" id="partModal" onclick="if (event.target === this) closeModal('partModal')">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <span class="code" id="pm2-title">Thêm linh kiện</span>
+      <div class="grow"></div>
+      <button class="close" onclick="closeModal('partModal')" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form id="partForm" onsubmit="event.preventDefault(); submitPart();" style="display:flex; flex-direction:column; gap:12px;">
+        <input type="hidden" name="id" />
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Mã SKU *</label>
+            <input name="sku" required class="input" placeholder="VD: SCR-IP14-OLED" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Loại máy *</label>
+            <select name="category" required class="input" style="margin-top:6px;">
+              <option value="">-- Chọn --</option>
+              <option value="iphone">iPhone</option>
+              <option value="android">Android</option>
+              <option value="laptop">Laptop</option>
+              <option value="macbook">MacBook</option>
+              <option value="pc">PC</option>
+              <option value="other">Khác</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px; color:var(--text-2); font-weight:600;">Tên linh kiện *</label>
+          <input name="name" required class="input" placeholder="VD: Màn hình iPhone 14 OLED zin" style="margin-top:6px;" />
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Tồn kho</label>
+            <input name="stock" type="number" min="0" value="0" class="input" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Min stock</label>
+            <input name="min_stock" type="number" min="0" value="5" class="input" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Đơn vị</label>
+            <input name="unit" value="cái" class="input" style="margin-top:6px;" />
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Giá vốn (VND)</label>
+            <input name="unit_cost" type="number" min="0" value="0" class="input" style="margin-top:6px;" />
+          </div>
+          <div>
+            <label style="font-size:12px; color:var(--text-2); font-weight:600;">Giá bán (VND)</label>
+            <input name="unit_price" type="number" min="0" value="0" class="input" style="margin-top:6px;" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('partModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="submitPart()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="paymentModal" onclick="if (event.target === this) closeModal('paymentModal')">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <svg viewBox="0 0 24 24" style="width:20px; height:20px; stroke:var(--blue); fill:none; stroke-width:2;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span class="code" id="pm-code" style="font-size:15px;">FFC-0000</span>
+      <span style="font-size:13px; color:var(--text-2);" data-i18n="dash.payment.modal.title">Thu tiền phiếu</span>
+      <div class="grow"></div>
+      <button class="close" onclick="closeModal('paymentModal')" aria-label="Đóng">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="info-grid" style="margin-bottom:18px;">
+        <div class="item"><div class="k" data-i18n="dash.cust.col.name">Khách hàng</div><div class="v" id="pm-customer">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.cust.col.phone">SĐT</div><div class="v" id="pm-phone">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.recent.col.device">Thiết bị</div><div class="v" id="pm-device">—</div></div>
+        <div class="item"><div class="k" data-i18n="dash.tickets.col.tech">KTV</div><div class="v" id="pm-tech">—</div></div>
+        <div class="item full"><div class="k" data-i18n="dash.intake.issue">Mô tả lỗi</div><div class="v" id="pm-issue">—</div></div>
+      </div>
+
+      <div class="pay-form-row single">
+        <div class="pay-field">
+          <label data-i18n="dash.payment.modal.method">Phương thức thanh toán</label>
+          <div class="pay-method-grid" id="pm-methods">
+            <div class="pay-method-opt selected" data-method="cash">
+              <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10h.01M18 14h.01"/></svg>
+              <span data-i18n="dash.payment.method.cash">Tiền mặt</span>
+            </div>
+            <div class="pay-method-opt" data-method="bank">
+              <svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M3 10h18L12 3 3 10z"/></svg>
+              <span data-i18n="dash.payment.method.bank">Chuyển khoản</span>
+            </div>
+            <div class="pay-method-opt" data-method="card">
+              <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+              <span data-i18n="dash.payment.method.card">Thẻ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pay-form-row">
+        <div class="pay-field">
+          <label data-i18n="dash.payment.modal.discount">Giảm giá (%)</label>
+          <input type="number" id="pm-discount" min="0" max="100" value="0" />
+        </div>
+        <div class="pay-field">
+          <label data-i18n="dash.payment.modal.received">Khách đưa (₫)</label>
+          <input type="text" id="pm-received" placeholder="0" />
+        </div>
+      </div>
+
+      <div class="pay-form-row single">
+        <div class="pay-field">
+          <label data-i18n="dash.payment.modal.note">Ghi chú</label>
+          <textarea id="pm-note" rows="2" placeholder="Ghi chú thêm..." data-i18n-attr="placeholder:dash.payment.modal.notePh"></textarea>
+        </div>
+      </div>
+
+      <div class="pay-summary">
+        <div class="pay-sum-row"><span class="k" data-i18n="dash.payment.invoice.subtotal">Tạm tính</span><span class="v" id="pm-subtotal">0₫</span></div>
+        <div class="pay-sum-row"><span class="k" data-i18n="dash.payment.invoice.discount">Giảm giá</span><span class="v" id="pm-discountAmt">0₫</span></div>
+        <div class="pay-sum-row total"><span class="k" data-i18n="dash.payment.invoice.total">Tổng thu</span><span class="v" id="pm-total">0₫</span></div>
+        <div class="pay-sum-row" id="pm-changeRow" style="display:none;"><span class="k" data-i18n="dash.payment.modal.change">Tiền thối</span><span class="v" id="pm-change" style="color:#15803d; font-weight:700;">0₫</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('paymentModal')" data-i18n="dash.payment.modal.cancel">Hủy</button>
+      <button class="btn btn-primary" onclick="confirmPayment()" data-i18n="dash.payment.modal.confirm">Xác nhận thu tiền</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg">Đã lưu</span>
+</div>
+
+<!-- ============ SEARCH RESULTS DROPDOWN (for topbar) ============ -->
+<!-- Injected dynamically inside .topbar .search via JS -->
+
+<script>
+  /* ============================================================
+     Mock data — replace with API calls once backend is live.
+     Stored in memory only; refresh = fresh data.
+     ============================================================ */
+  /* TICKETS live data — loaded from backend API on init.
+     Fallback to empty array if backend is down (will retry). */
+  let TICKETS = [];
+
+  /* Convert backend ticket (snake_case) → frontend convention (camelCase fields
+     already in use throughout this file). Keep `code` / `status` as-is. */
+  function normalizeTicket(t) {
+    return {
+      code:        t.code,
+      customer:    t.customer_name || '',
+      phone:       t.customer_phone || '',
+      device:      t.device || '',
+      issue:       t.issue || '',
+      tech:        t.technician_name || 'Chưa phân',
+      technicianId: t.technician_id,
+      date:        (t.created_at || '').slice(0, 16).replace('T', ' '),
+      quote:       +t.quote || 0,
+      status:      t.status,
+      urgent:      !!t.urgent,
+      source:      t.source,
+      paid:        !!t.paid_invoice_no,
+      paidMethod:  t.paid_method,
+      paidAt:      t.paid_at,
+      invoiceNo:   t.paid_invoice_no,
+      finalAmount: t.paid_final_amount,
+      lastStatusAt: t.last_status_at,
+    };
+  }
+
+  async function refreshTickets() {
+    try {
+      /* Fetch tickets + pending bookings in parallel */
+      const [ticketsRes, bookingsRes] = await Promise.all([
+        api('/tickets', { query: { limit: 200 } }),
+        api('/bookings', { query: { status: 'pending' } }).catch(() => ({ data: [] })),
+      ]);
+
+      TICKETS.length = 0;
+
+      /* Pending bookings rendered as virtual tickets (status='waiting' so they
+         appear in the "Chờ" tab, with source='booking' to differentiate). */
+      bookingsRes.data.forEach(b => {
+        const methodSuffix = ({ ship: ' · 🚚 Ship đến tiệm', onsite: ' · 🏠 KTV đến nhà' })[b.method] || '';
+        TICKETS.push({
+          code:         b.code,
+          customer:     b.customer_name,
+          phone:        b.customer_phone,
+          device:       b.device,
+          issue:        b.issue + methodSuffix,
+          tech:         'Chưa phân',
+          technicianId: null,
+          date:         (b.created_at || '').slice(0, 16).replace('T', ' '),
+          quote:        0,
+          status:       'waiting',
+          urgent:       false,        /* online booking ≠ urgent — admin tự quyết */
+          source:       'booking',    /* internal marker — visible badge is 'online' below */
+          bookingId:    b.id,
+          bookingMethod: b.method,
+          bookingDate:  b.appointment_date,
+          bookingSlot:  b.time_slot,
+          bookingAddress: b.address,
+          bookingNote:  b.note,
+        });
+      });
+
+      ticketsRes.data.forEach(t => TICKETS.push(normalizeTicket(t)));
+
+      if (typeof renderDashTable === 'function') renderDashTable();
+      if (typeof renderTicketsTable === 'function') renderTicketsTable();
+      if (typeof renderCustomers === 'function') renderCustomers();
+      if (typeof renderPaymentTable === 'function') renderPaymentTable();
+      if (typeof renderTechWorkload === 'function') renderTechWorkload();
+      if (typeof updateCounts === 'function') updateCounts();
+    } catch (err) {
+      console.error('[refreshTickets] failed:', err.message);
+      if (typeof showToast === 'function') showToast('Không tải được phiếu: ' + err.message);
+    }
+  }
+  /* Expose so other handlers (status change, intake, payment) can refresh */
+  window.refreshTickets = refreshTickets;
+
+  /* Danh sách kỹ thuật viên — phải khớp với field `tech` của TICKETS */
+  const TECHNICIANS = [
+    { name: 'Minh Triết', role: 'iPhone',           color: '#2563eb' },
+    { name: 'Trúc Ly',    role: 'Thay màn hình',    color: '#f59e0b' },
+    { name: 'Tuấn Kiệt',  role: 'Main laptop',      color: '#7c3aed' },
+    { name: 'Thanh Mai',  role: 'Vệ sinh',          color: '#10b981' },
+    { name: 'Hoài Nam',   role: 'Phục hồi dữ liệu', color: '#dc2626' },
+  ];
+  const techInitials = (name) => name.split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+
+  /* Dynamic status label — lookup runs at render time so language toggle
+     redraws with the active locale. */
+  const tr = (k) => (window.PA_i18n ? window.PA_i18n.tr(k) : k);
+  const statusLabel = (s) => tr('dash.status.' + s);
+  const urgentLabel = () => tr('dash.status.urgent');
+
+  const fmtMoney = (n) => n > 0 ? n.toLocaleString('vi-VN') + '₫' : '—';
+
+  /* ============================================================
+     Render
+     ============================================================ */
+  function renderDashTable() {
+    const tbody = document.querySelector('#dashTable tbody');
+    tbody.innerHTML = TICKETS.slice(0, 5).map(t => `
+      <tr style="cursor:pointer" onclick="openTicket('${t.code}')">
+        <td><span class="ticket-code">${t.code}</span></td>
+        <td><div class="device">${t.customer}<div class="meta">${t.phone}</div></div></td>
+        <td><div class="device">${t.device}<div class="meta">${t.issue}</div></div></td>
+        <td><span class="badge ${t.status}"><span class="dot"></span>${statusLabel(t.status)}</span></td>
+        <td><div class="icon-row"><button title="Xem chi tiết" onclick="event.stopPropagation(); openTicket('${t.code}')">
+          <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </button></div></td>
+      </tr>
+    `).join('');
+  }
+
+  let ticketFilter = 'all';
+  let ticketTechFilter = '';
+  let searchQuery = '';
+  function matchesSearch(t, q) {
+    if (!q) return true;
+    q = q.toLowerCase();
+    return (t.code.toLowerCase().includes(q) ||
+            t.customer.toLowerCase().includes(q) ||
+            t.phone.replace(/\s/g, '').includes(q.replace(/\s/g, '')) ||
+            t.device.toLowerCase().includes(q));
+  }
+  function renderTicketsTable() {
+    let list = ticketFilter === 'all' ? TICKETS : TICKETS.filter(t => t.status === ticketFilter);
+    if (ticketTechFilter) list = list.filter(t => t.tech === ticketTechFilter);
+    if (searchQuery) list = list.filter(t => matchesSearch(t, searchQuery));
+    const tbody = document.querySelector('#ticketsTable tbody');
+    tbody.innerHTML = list.length ? list.map(t => `
+      <tr style="cursor:pointer" onclick="openTicket('${t.code}')">
+        <td>
+          <span class="ticket-code">${t.code}</span>
+          ${(t.source === 'online' || t.source === 'booking') ? `<br><span class="badge" style="margin-top:4px; background:rgba(37,99,235,0.10); color:var(--blue); border:1px solid rgba(37,99,235,0.25); font-weight:600;">🌐 Online</span>` : ''}
+          ${t.urgent ? `<br><span class="badge urgent" style="margin-top:4px;">${urgentLabel()}</span>` : ''}
+        </td>
+        <td><div class="device">${t.customer}<div class="meta">${t.phone}</div></div></td>
+        <td><div class="device">${t.device}<div class="meta">${t.issue}</div></div></td>
+        <td>${t.tech}</td>
+        <td style="font-size:12px; color:var(--text-2)">${t.date}</td>
+        <td>${fmtMoney(t.quote)}</td>
+        <td><span class="badge ${t.status}"><span class="dot"></span>${statusLabel(t.status)}</span></td>
+        <td>
+          <div class="icon-row">
+            <button title="Chi tiết" onclick="event.stopPropagation(); openTicket('${t.code}')">
+              <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-3);">Không có phiếu nào khớp</td></tr>`;
+  }
+
+  /* ============================================================
+     CUSTOMERS pane — derived from TICKETS (group by phone)
+     ============================================================ */
+  let customerSearch = '';
+  /* Customer list loaded from /api/customers — includes everyone in DB,
+     not just those with tickets. Cached so search input doesn't re-fetch. */
+  let CUSTOMERS_CACHE = [];
+
+  async function loadCustomers() {
+    try {
+      const res = await api('/customers', { query: { search: customerSearch || undefined } });
+      CUSTOMERS_CACHE = res.data;
+      renderCustomersTable();
+    } catch (err) {
+      console.error('[loadCustomers] failed:', err.message);
+    }
+  }
+
+  /* Legacy alias — other code calls renderCustomers() after mutations.
+     Re-fetch from API so new bookings/tickets reflect in the list. */
+  function renderCustomers() { loadCustomers(); }
+
+  /* =========================================================
+     Staff pane — list KTV from /api/technicians + add/edit
+     ========================================================= */
+  async function loadStaff() {
+    try {
+      const r = await api('/technicians');
+      window.TECHNICIAN_LIST = r.data || [];
+      renderStaffTable();
+    } catch (err) {
+      const tb = document.getElementById('staffTbody');
+      if (tb) tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-3);">Lỗi tải KTV: ${err.message}</td></tr>`;
+    }
+  }
+  function renderStaffTable() {
+    const tb = document.getElementById('staffTbody');
+    const cnt = document.getElementById('staffCount');
+    if (!tb) return;
+    const list = window.TECHNICIAN_LIST || [];
+    if (cnt) cnt.textContent = list.length ? `(${list.length} người)` : '';
+    if (!list.length) {
+      tb.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-3);">Chưa có KTV nào. Bấm "+ Thêm KTV" để bắt đầu.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = list.map(t => `
+      <tr>
+        <td>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:32px; height:32px; border-radius:50%; background:${t.color || '#2563eb'}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">
+              ${(t.name || '?').split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase()}
+            </div>
+            <strong>${t.name}</strong>
+          </div>
+        </td>
+        <td>${t.specialty || '—'}</td>
+        <td><span style="font-weight:700; color:${(t.current_load || 0) > 3 ? '#dc2626' : 'var(--blue)'};">${t.current_load || 0}</span></td>
+        <td style="font-size:12px; color:var(--text-2);">${t.hire_date ? (t.hire_date || '').slice(0, 10) : '—'}</td>
+        <td>${t.is_active ? '<span class="badge in-progress"><span class="dot"></span>Đang làm</span>' : '<span class="badge cancelled"><span class="dot"></span>Tạm ngưng</span>'}</td>
+        <td><div class="icon-row"><button title="Sửa" onclick="openEditStaff(${t.id})">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+        </button></div></td>
+      </tr>
+    `).join('');
+  }
+  window.openAddStaffModal = function () {
+    document.getElementById('sm-title').textContent = 'Thêm KTV';
+    const f = document.getElementById('staffForm');
+    f.reset();
+    f.id.value = '';
+    openModal('staffModal');
+  };
+  window.openEditStaff = function (id) {
+    const t = (window.TECHNICIAN_LIST || []).find(x => x.id === id);
+    if (!t) return;
+    document.getElementById('sm-title').textContent = 'Sửa KTV — ' + t.name;
+    const f = document.getElementById('staffForm');
+    f.id.value = t.id;
+    f.name.value = t.name || '';
+    f.specialty.value = t.specialty || '';
+    f.color.value = t.color || '#2563eb';
+    f.hire_date.value = t.hire_date ? (t.hire_date || '').slice(0, 10) : '';
+    openModal('staffModal');
+  };
+  window.submitStaff = async function () {
+    const f = document.getElementById('staffForm');
+    const data = Object.fromEntries(new FormData(f).entries());
+    if (!data.name) { showToast('Thiếu tên KTV'); return; }
+    try {
+      if (data.id) {
+        await api('/technicians/' + data.id, {
+          method: 'PUT',
+          body: { name: data.name, specialty: data.specialty || null, color: data.color || null },
+        });
+        showToast('Đã cập nhật KTV ' + data.name);
+        closeModal('staffModal');
+      } else {
+        const r = await api('/technicians', {
+          method: 'POST',
+          body: { name: data.name, specialty: data.specialty || null, color: data.color || null, hire_date: data.hire_date || null },
+        });
+        closeModal('staffModal');
+        /* Hiển thị credentials KTV đăng nhập (chỉ show 1 lần) */
+        if (r.login) {
+          alert(
+            `KTV ${data.name} đã được tạo!\n\n` +
+            `Tài khoản đăng nhập:\n` +
+            `  Username: ${r.login.username}\n` +
+            `  Password: ${r.login.password}\n\n` +
+            `Hãy nhắc KTV đổi mật khẩu sau khi đăng nhập lần đầu.`
+          );
+        }
+        showToast('Đã thêm KTV ' + data.name);
+      }
+      await loadStaff();
+    } catch (err) {
+      showToast('Lỗi: ' + err.message);
+    }
+  };
+
+  /* =========================================================
+     Reports pane — load KPIs + top KTV + status breakdown
+     ========================================================= */
+  const STATUS_LABEL = {
+    waiting: 'Chờ xử lý', 'in-progress': 'Đang sửa', testing: 'Đang test',
+    done: 'Xong', delivered: 'Đã giao', cancelled: 'Đã huỷ',
+  };
+  const STATUS_COLOR = {
+    waiting: '#ea580c', 'in-progress': '#2563eb', testing: '#9333ea',
+    done: '#16a34a', delivered: '#64748b', cancelled: '#dc2626',
+  };
+  async function loadReports() {
+    try {
+      const [ov, st, tech, devs] = await Promise.all([
+        api('/reports/overview'),
+        api('/reports/tickets-by-status'),
+        api('/reports/top-technicians', { query: { limit: 5 } }),
+        api('/reports/top-devices').catch(() => ({ data: [] })),
+      ]);
+      document.getElementById('rp-tickets-today').textContent = ov.today.tickets;
+      document.getElementById('rp-revenue-today').textContent = fmtMoney(ov.today.revenue);
+      document.getElementById('rp-in-progress').textContent = ov.in_progress;
+      document.getElementById('rp-pending-pay').textContent = ov.pending_payments.count;
+      document.getElementById('rp-pending-pay-amt').textContent = fmtMoney(ov.pending_payments.total || 0);
+
+      const total = st.data.reduce((s, r) => s + r.count, 0) || 1;
+      document.getElementById('rp-status-list').innerHTML = st.data.length ? st.data.map(r => {
+        const pct = Math.round((r.count / total) * 100);
+        const c = STATUS_COLOR[r.status] || '#64748b';
+        return `<div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px;">
+            <span style="font-weight:600;">${STATUS_LABEL[r.status] || r.status}</span>
+            <span><strong>${r.count}</strong> <span style="color:var(--text-3);">(${pct}%)</span></span>
+          </div>
+          <div style="height:8px; background:var(--neutral-100); border-radius:4px; overflow:hidden;">
+            <div style="height:100%; width:${pct}%; background:${c}; border-radius:4px;"></div>
+          </div>
+        </div>`;
+      }).join('') : '<div style="color:var(--text-3); text-align:center; padding:20px;">Chưa có dữ liệu</div>';
+
+      document.getElementById('rp-tech-list').innerHTML = tech.data.length ? tech.data.map((t, i) => `
+        <div style="display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; background:var(--neutral-50);">
+          <div style="width:24px; height:24px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">${i+1}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600; font-size:13px;">${t.name}</div>
+            <div style="font-size:11px; color:var(--text-3);">${t.specialty || '—'} · ${t.ticket_count} phiếu</div>
+          </div>
+          <div style="font-weight:700; color:#16a34a; font-size:13px;">${fmtMoney(t.revenue)}</div>
+        </div>
+      `).join('') : '<div style="color:var(--text-3); text-align:center; padding:20px;">Chưa có KTV nào có doanh thu</div>';
+
+      document.getElementById('rp-device-list').innerHTML = devs.data && devs.data.length ? devs.data.map((d, i) => `
+        <div style="display:flex; align-items:center; gap:10px; padding:8px; border-radius:8px; background:var(--neutral-50);">
+          <div style="width:24px; height:24px; border-radius:50%; background:var(--text-2); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">${i+1}</div>
+          <div style="flex:1; font-weight:600; font-size:13px;">${d.device || d.device_type || '—'}</div>
+          <div style="font-weight:700; color:var(--blue); font-size:13px;">${d.count || 0} phiếu</div>
+        </div>
+      `).join('') : '<div style="color:var(--text-3); text-align:center; padding:20px;">Chưa có dữ liệu</div>';
+    } catch (err) {
+      showToast('Lỗi tải báo cáo: ' + err.message);
+    }
+  }
+
+  /* =========================================================
+     Parts (inventory) pane
+     ========================================================= */
+  async function loadParts() {
+    try {
+      const r = await api('/parts');
+      const parts = r.data || [];
+      const cnt = document.getElementById('partsCount');
+      if (cnt) cnt.textContent = parts.length ? `(${parts.length} SKU)` : '';
+      document.getElementById('parts-total').textContent = parts.length;
+      const low = parts.filter(p => p.stock <= p.min_stock).length;
+      document.getElementById('parts-lowstock').textContent = low;
+      const value = parts.reduce((s, p) => s + (p.stock * p.unit_cost), 0);
+      document.getElementById('parts-value').textContent = fmtMoney(value);
+
+      const tb = document.getElementById('partsTbody');
+      const CAT = { iphone: 'iPhone', android: 'Android', laptop: 'Laptop', macbook: 'MacBook', pc: 'PC', other: 'Khác' };
+      tb.innerHTML = parts.length ? parts.map(p => {
+        const status = p.stock === 0
+          ? '<span class="badge cancelled"><span class="dot"></span>Hết hàng</span>'
+          : p.stock <= p.min_stock
+          ? '<span class="badge waiting"><span class="dot"></span>Sắp hết</span>'
+          : '<span class="badge in-progress"><span class="dot"></span>Còn hàng</span>';
+        return `
+          <tr>
+            <td>
+              <div style="font-family:monospace; font-size:11px; color:var(--text-3);">${p.sku}</div>
+              <div style="font-weight:600;">${p.name}</div>
+            </td>
+            <td>${CAT[p.category] || p.category}</td>
+            <td><strong style="font-size:15px; color:${p.stock <= p.min_stock ? '#dc2626' : 'var(--text-main)'};">${p.stock}</strong> ${p.unit}</td>
+            <td>${p.min_stock}</td>
+            <td>${fmtMoney(p.unit_cost)}</td>
+            <td>${fmtMoney(p.unit_price)}</td>
+            <td>${status}</td>
+            <td><div class="icon-row"><button title="Sửa" onclick="openEditPart(${p.id})">
+              <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
+            </button></div></td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-3);">Chưa có linh kiện. Bấm "+ Thêm linh kiện".</td></tr>';
+      window.PARTS_CACHE = parts;
+    } catch (err) {
+      document.getElementById('partsTbody').innerHTML = `<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-3);">Lỗi: ${err.message}</td></tr>`;
+    }
+  }
+  window.openAddPartModal = function () {
+    document.getElementById('pm2-title').textContent = 'Thêm linh kiện';
+    const f = document.getElementById('partForm');
+    f.reset(); f.id.value = ''; f.stock.value = 0; f.min_stock.value = 5; f.unit.value = 'cái';
+    openModal('partModal');
+  };
+  window.openEditPart = function (id) {
+    const p = (window.PARTS_CACHE || []).find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('pm2-title').textContent = 'Sửa — ' + p.name;
+    const f = document.getElementById('partForm');
+    f.id.value = p.id;
+    f.sku.value = p.sku; f.name.value = p.name; f.category.value = p.category;
+    f.stock.value = p.stock; f.min_stock.value = p.min_stock; f.unit.value = p.unit;
+    f.unit_cost.value = p.unit_cost; f.unit_price.value = p.unit_price;
+    openModal('partModal');
+  };
+  window.submitPart = async function () {
+    const f = document.getElementById('partForm');
+    const data = Object.fromEntries(new FormData(f).entries());
+    ['stock','min_stock','unit_cost','unit_price'].forEach(k => data[k] = parseInt(data[k]) || 0);
+    if (!data.sku || !data.name || !data.category) { showToast('Thiếu SKU/Tên/Loại'); return; }
+    try {
+      if (data.id) {
+        await api('/parts/' + data.id, { method: 'PUT', body: data });
+        showToast('Đã cập nhật ' + data.name);
+      } else {
+        await api('/parts', { method: 'POST', body: data });
+        showToast('Đã thêm ' + data.name);
+      }
+      closeModal('partModal'); await loadParts();
+    } catch (err) {
+      showToast('Lỗi: ' + err.message);
+    }
+  };
+
+  /* =========================================================
+     Settings pane — show current user + change password
+     ========================================================= */
+  function loadSettings() {
+    try {
+      const user = JSON.parse(sessionStorage.getItem('ffc_user') || '{}');
+      const el = document.getElementById('settingsCurrentUser');
+      if (el) {
+        el.innerHTML = `
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="width:48px; height:48px; border-radius:50%; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">
+              ${(user.full_name || 'U').split(/\s+/).map(w=>w[0]).slice(-2).join('').toUpperCase()}
+            </div>
+            <div>
+              <div style="font-weight:700; font-size:15px;">${user.full_name || '—'}</div>
+              <div style="font-size:12px; color:var(--text-3);">@${user.username || '—'} · Role: <strong>${user.role || '—'}</strong></div>
+            </div>
+          </div>
+        `;
+      }
+    } catch (_) {}
+  }
+  window.submitChangePassword = async function () {
+    const f = document.getElementById('changePwdForm');
+    const data = Object.fromEntries(new FormData(f).entries());
+    if (data.new_password !== data.confirm_password) {
+      showToast('Mật khẩu xác nhận không khớp');
+      return;
+    }
+    try {
+      await api('/auth/me', {
+        method: 'PUT',
+        body: { current_password: data.current_password, new_password: data.new_password },
+      });
+      showToast('Đã đổi mật khẩu');
+      f.reset();
+    } catch (err) {
+      showToast('Lỗi: ' + err.message);
+    }
+  };
+
+  function renderCustomersTable() {
+    const tbody = document.querySelector('#customersTable tbody');
+    if (!tbody) return;
+    let list = CUSTOMERS_CACHE;
+    if (customerSearch) {
+      const q = customerSearch.toLowerCase();
+      list = list.filter(c => c.full_name.toLowerCase().includes(q) ||
+                              (c.phone || '').replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+    }
+    tbody.innerHTML = list.length ? list.map(c => {
+      const phoneKey = (c.phone || '').replace(/\s/g, '');
+      return `
+        <tr style="cursor:pointer" onclick="openCustomer('${phoneKey}')">
+          <td><div class="device">${c.full_name}</div></td>
+          <td>${c.phone}</td>
+          <td><span style="font-weight:700; color:var(--blue)">${c.ticket_count || 0}</span></td>
+          <td style="font-size:12px; color:var(--text-2)">${c.last_visit ? (c.last_visit || '').slice(0, 16).replace('T', ' ') : '—'}</td>
+          <td>${fmtMoney(c.total_spent || 0)}</td>
+          <td><div class="icon-row"><button onclick="event.stopPropagation(); openCustomer('${phoneKey}')">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button></div></td>
+        </tr>
+      `;
+    }).join('') : `<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--text-3);">Chưa có khách hàng nào</td></tr>`;
+  }
+
+  /* ============================================================
+     KTV — assignee dropdown, filter, workload widget
+     ============================================================ */
+  function populateTechDropdowns() {
+    /* Intake form */
+    const intakeSel = document.getElementById('intakeAssignee');
+    if (intakeSel) {
+      const noneOpt = intakeSel.querySelector('option[value=""]');
+      intakeSel.innerHTML = '';
+      if (noneOpt) intakeSel.appendChild(noneOpt);
+      TECHNICIANS.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = `KTV. ${t.name} (${t.role})`;
+        intakeSel.appendChild(opt);
+      });
+    }
+    /* Tickets pane filter */
+    const techFilterSel = document.getElementById('techFilter');
+    if (techFilterSel) {
+      const allOpt = techFilterSel.querySelector('option[value=""]');
+      techFilterSel.innerHTML = '';
+      if (allOpt) techFilterSel.appendChild(allOpt);
+      TECHNICIANS.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.name;
+        opt.textContent = t.name;
+        techFilterSel.appendChild(opt);
+      });
+    }
+  }
+
+  function renderTechWorkload() {
+    const host = document.getElementById('techWorkload');
+    if (!host) return;
+    const activeStatuses = ['waiting', 'in-progress', 'testing'];
+    const counts = new Map();
+    TECHNICIANS.forEach(t => counts.set(t.name, 0));
+    TICKETS.forEach(t => {
+      if (activeStatuses.includes(t.status) && counts.has(t.tech)) {
+        counts.set(t.tech, counts.get(t.tech) + 1);
+      }
+    });
+    host.innerHTML = TECHNICIANS.map(t => {
+      const n = counts.get(t.name) || 0;
+      let cls = 'zero';
+      if (n >= 4) cls = 'overload';
+      else if (n >= 2) cls = 'heavy';
+      else if (n >= 1) cls = '';
+      return `
+        <div class="tech-row" onclick="filterTicketsByTech('${t.name}')" title="Xem phiếu của ${t.name}">
+          <div class="tech-avatar" style="background:${t.color};">${techInitials(t.name)}</div>
+          <div class="tech-info">
+            <div class="tech-name">${t.name}</div>
+            <div class="tech-role">${t.role}</div>
+          </div>
+          <div class="tech-count ${cls}">${n}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function filterTicketsByTech(name) {
+    ticketTechFilter = name;
+    const sel = document.getElementById('techFilter');
+    if (sel) sel.value = name;
+    renderTicketsTable();
+    goPane('tickets');
+  }
+
+  /* Wire tech filter dropdown */
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'techFilter') {
+      ticketTechFilter = e.target.value;
+      renderTicketsTable();
+    }
+  });
+
+  /* ============================================================
+     MODALS — ticket detail + customer history + status update
+     ============================================================ */
+  const STATUS_FLOW = ['waiting', 'in-progress', 'testing', 'done', 'delivered'];
+  let currentTicketCode = null;
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+      document.body.style.overflow = '';
+    }
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
+  function openTicket(code) {
+    const t = TICKETS.find(x => x.code === code);
+    if (!t) return;
+    currentTicketCode = code;
+
+    document.getElementById('tm-code').textContent = t.code;
+    const badge = document.getElementById('tm-badge');
+    badge.className = 'badge ' + t.status;
+    document.getElementById('tm-badge-label').textContent = statusLabel(t.status);
+    document.getElementById('tm-customer').textContent = t.customer;
+    document.getElementById('tm-phone').textContent = t.phone;
+    document.getElementById('tm-device').textContent = t.device;
+    /* Populate KTV dropdown from cached technicians list */
+    const techSelect = document.getElementById('tm-tech-select');
+    if (techSelect) {
+      const opts = ['<option value="">— Chưa phân —</option>'];
+      const list = window.TECHNICIAN_LIST || [];
+      list.forEach(tech => {
+        const sel = tech.id === t.technicianId ? 'selected' : '';
+        opts.push(`<option value="${tech.id}" ${sel}>${tech.name} (${tech.role || ''})</option>`);
+      });
+      techSelect.innerHTML = opts.join('');
+    }
+    document.getElementById('tm-issue').textContent = t.issue;
+    document.getElementById('tm-date').textContent = t.date;
+    document.getElementById('tm-quote').textContent = fmtMoney(t.quote);
+
+    /* Build clickable timeline */
+    const currentIdx = STATUS_FLOW.indexOf(t.status);
+    document.getElementById('tm-timeline').innerHTML = STATUS_FLOW.map((s, i) => {
+      const cls = i < currentIdx ? 'done' : i === currentIdx ? 'current' : '';
+      return `<div class="status-step ${cls}" onclick="setStatus('${s}')">
+                <span class="num">${i + 1}</span>${statusLabel(s)}
+              </div>`;
+    }).join('');
+
+    /* "Advance →" button — different action for pending bookings vs tickets */
+    const advBtn = document.getElementById('tm-advance');
+    if (t.source === 'booking') {
+      /* Booking pending → "Confirm" button creates real ticket */
+      advBtn.style.display = '';
+      advBtn.textContent = '✓ Xác nhận đặt lịch → tạo phiếu';
+      advBtn.onclick = () => confirmBookingTicket(t);
+    } else {
+      const next = STATUS_FLOW[currentIdx + 1];
+      if (next) {
+        advBtn.style.display = '';
+        advBtn.textContent = '→ ' + statusLabel(next);
+        advBtn.onclick = () => setStatus(next);
+      } else {
+        advBtn.style.display = 'none';
+      }
+    }
+
+    openModal('ticketModal');
+  }
+
+  async function setStatus(newStatus) {
+    const t = TICKETS.find(x => x.code === currentTicketCode);
+    if (!t || t.status === newStatus) return;
+    /* Pending booking phải confirm trước, không thể chuyển status */
+    if (t.source === 'booking') {
+      showToast('Hãy xác nhận đặt lịch trước (nút "✓ Xác nhận đặt lịch")');
+      return;
+    }
+    /* Bắt buộc phân KTV trước khi chuyển sang "Đang sửa" */
+    if (newStatus === 'in-progress' && !t.technicianId) {
+      showToast('Hãy phân KTV trước khi chuyển sang "Đang sửa"');
+      return;
+    }
+    try {
+      await api(`/tickets/${encodeURIComponent(t.code)}/status`, {
+        method: 'PATCH', body: { status: newStatus },
+      });
+      await refreshTickets();
+      openTicket(t.code); /* re-render modal */
+      showToast(`${t.code} → ${statusLabel(newStatus)}`);
+    } catch (err) {
+      showToast('Lỗi: ' + err.message);
+    }
+  }
+
+  /* Phân/đổi KTV cho ticket đang mở */
+  window.assignTechnician = async function (techIdStr) {
+    const t = TICKETS.find(x => x.code === currentTicketCode);
+    if (!t) return;
+    if (t.source === 'booking') {
+      showToast('Hãy xác nhận đặt lịch trước khi phân KTV');
+      return;
+    }
+    const techId = techIdStr ? parseInt(techIdStr) : null;
+    if (techId === t.technicianId) return;
+    try {
+      await api(`/tickets/${encodeURIComponent(t.code)}`, {
+        method: 'PATCH', body: { technician_id: techId },
+      });
+      await refreshTickets();
+      openTicket(t.code);
+      const tech = (window.TECHNICIAN_LIST || []).find(x => x.id === techId);
+      showToast(techId ? `${t.code} → KTV ${tech ? tech.name : ''}` : `${t.code} — Bỏ phân KTV`);
+    } catch (err) {
+      showToast('Lỗi phân KTV: ' + err.message);
+    }
+  };
+
+  /* Confirm a pending booking → creates real ticket on backend */
+  async function confirmBookingTicket(t) {
+    if (!t.bookingId) return;
+    try {
+      const res = await api(`/bookings/${t.bookingId}/confirm`, {
+        method: 'POST',
+        body: { quote: 0 }, /* admin can set quote later via ticket update */
+      });
+      closeModal('ticketModal');
+      await refreshTickets();
+      showToast(`Đã xác nhận ${t.code} — chuyển sang phiếu sửa chữa`);
+    } catch (err) {
+      showToast('Lỗi xác nhận: ' + err.message);
+    }
+  }
+  window.confirmBookingTicket = confirmBookingTicket;
+
+  async function openCustomer(phoneKey) {
+    /* Fetch detailed customer info + tickets history from API */
+    let phoneOriginal = phoneKey;
+    const cached = CUSTOMERS_CACHE.find(c => (c.phone || '').replace(/\s/g, '') === phoneKey);
+    if (cached) phoneOriginal = cached.phone;
+    try {
+      const res = await api(`/customers/${encodeURIComponent(phoneOriginal)}`);
+      const { customer, tickets, stats } = res;
+      const fmtDate = (d) => d ? (d || '').slice(0, 16).replace('T', ' ') : '—';
+      const genderLabel = { male: 'Nam', female: 'Nữ', other: 'Khác' };
+
+      document.getElementById('cm-name').textContent = customer.full_name;
+      document.getElementById('cm-phone').textContent = customer.phone;
+      document.getElementById('cm-email').textContent     = customer.email   || '—';
+      document.getElementById('cm-address').textContent   = customer.address || '—';
+      document.getElementById('cm-birthday').textContent  = customer.birthday || '—';
+      document.getElementById('cm-gender').textContent    = genderLabel[customer.gender] || '—';
+      document.getElementById('cm-createdAt').textContent = fmtDate(customer.created_at);
+
+      document.getElementById('cm-count').textContent     = stats.total_tickets || 0;
+      document.getElementById('cm-completed').textContent = stats.completed || 0;
+      document.getElementById('cm-total').textContent     = fmtMoney(stats.total_paid || 0);
+      const lastTicket = tickets[0];
+      document.getElementById('cm-lastVisit').textContent = lastTicket ? fmtDate(lastTicket.created_at) : '—';
+
+      const tbody = document.querySelector('#cm-history tbody');
+      tbody.innerHTML = tickets.length ? tickets.map(t => `
+        <tr style="cursor:pointer" onclick="closeModal('customerModal'); setTimeout(()=>openTicket('${t.code}'), 200)">
+          <td><span class="ticket-code">${t.code}</span></td>
+          <td><div class="device">${t.device}<div class="meta">${t.issue}</div></div></td>
+          <td style="font-size:12px; color:var(--text-2)">${(t.created_at || '').slice(0, 16).replace('T', ' ')}</td>
+          <td>${fmtMoney(t.quote)}</td>
+          <td><span class="badge ${t.status}"><span class="dot"></span>${statusLabel(t.status)}</span></td>
+        </tr>
+      `).join('') : `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-3);">Khách hàng chưa có phiếu sửa nào</td></tr>`;
+      openModal('customerModal');
+    } catch (err) {
+      showToast('Lỗi: ' + err.message);
+    }
+  }
+
+  function openCustomerModal() {
+    showToast('Thêm khách hàng mới — đang phát triển');
+  }
+
+  /* Customer pane search input */
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'custSearch') {
+      customerSearch = e.target.value.trim();
+      renderCustomers();
+    }
+  });
+
+  /* ============================================================
+     PAYMENT — thu tiền, in hoá đơn
+     ============================================================ */
+  const payMethodLabel = (m) => tr('dash.payment.method.' + m);
+  const fmtVND = (n) => (+n || 0).toLocaleString('vi-VN') + '₫';
+  let invoiceCounter = 141;
+  let paymentFilter = 'pending';
+  let paymentSearch = '';
+  let currentPaymentCode = null;
+
+  /* Seed một hoá đơn đã thu hôm nay để demo */
+  (function seedPayments() {
+    const today = new Date().toISOString().slice(0, 10);
+    const t = TICKETS.find(x => x.code === 'FFC-0085');
+    if (t) {
+      const discount = 5;
+      const discountAmt = Math.round(t.quote * discount / 100);
+      Object.assign(t, {
+        paid: true,
+        paidMethod: 'bank',
+        discount,
+        discountAmt,
+        finalAmount: t.quote - discountAmt,
+        paidAt: today + ' 09:18',
+        invoiceNo: 'INV-' + new Date().getFullYear() + '-0141',
+        status: 'delivered',
+      });
+    }
+  })();
+
+  /* Merge online booking requests (from index.html "Đặt Lịch Ngay") into
+     TICKETS so admin sees them in pane Phiếu sửa chữa with badge "Online". */
+  /* Persist current TICKETS to localStorage so customer side ("Phiếu của tôi"
+     modal on index.html) can read and display them filtered by phone. */
+  const TICKETS_KEY = 'ffc_tickets';
+  function persistTickets() {
+    try { localStorage.setItem(TICKETS_KEY, JSON.stringify(TICKETS)); }
+    catch (_) {}
+  }
+
+  (function mergeOnlineBookings() {
+    try {
+      const list = JSON.parse(localStorage.getItem('ffc_online_bookings') || '[]');
+      list.forEach(b => {
+        /* Skip if already merged (same code already in TICKETS) */
+        if (TICKETS.some(t => t.code === b.code)) return;
+        TICKETS.unshift({
+          code: b.code,
+          customer: b.customer,
+          phone: b.phone,
+          device: b.device,
+          issue: b.issue + (b.method === 'ship' ? ' · 🚚 Ship đến tiệm' :
+                            b.method === 'onsite' ? ' · 🏠 KTV đến nhà' : ''),
+          tech: 'Chưa phân',
+          date: b.createdAt || new Date().toLocaleString('sv-SE').slice(0, 16),
+          quote: 0,
+          status: 'waiting',
+          urgent: true,
+          source: 'online',
+          bookingDate: b.date,
+          bookingSlot: b.timeSlot,
+          bookingMethod: b.method,
+          bookingAddress: b.address,
+          bookingNote: b.note,
+        });
+      });
+    } catch (_) {}
+    persistTickets();
+  })();
+
+  /* Live-refresh when a new booking comes in from another tab */
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'ffc_online_bookings') {
+      /* Reload page to re-merge — simplest approach for demo */
+      try {
+        const list = JSON.parse(e.newValue || '[]');
+        list.forEach(b => {
+          if (TICKETS.some(t => t.code === b.code)) return;
+          TICKETS.unshift({
+            code: b.code, customer: b.customer, phone: b.phone, device: b.device,
+            issue: b.issue + (b.method === 'ship' ? ' · 🚚 Ship đến tiệm' :
+                              b.method === 'onsite' ? ' · 🏠 KTV đến nhà' : ''),
+            tech: 'Chưa phân',
+            date: b.createdAt || new Date().toLocaleString('sv-SE').slice(0, 16),
+            quote: 0, status: 'waiting', urgent: true, source: 'online',
+            bookingDate: b.date, bookingSlot: b.timeSlot,
+            bookingMethod: b.method, bookingAddress: b.address, bookingNote: b.note,
+          });
+        });
+        if (typeof renderDashTable === 'function') renderDashTable();
+        if (typeof renderTicketsTable === 'function') renderTicketsTable();
+        if (typeof renderCustomers === 'function') renderCustomers();
+        if (typeof updateCounts === 'function') updateCounts();
+        if (typeof showToast === 'function') showToast('Có phiếu đặt lịch online mới!');
+      } catch (_) {}
+    }
+  });
+
+  function eligibleForPayment(t) {
+    return t.quote > 0 && (t.status === 'done' || t.status === 'delivered' || t.paid);
+  }
+
+  function getPaymentList() {
+    let list = TICKETS.filter(eligibleForPayment);
+    if (paymentFilter === 'pending') list = list.filter(t => !t.paid);
+    else if (paymentFilter === 'paid') list = list.filter(t => t.paid);
+    if (paymentSearch) {
+      const q = paymentSearch.toLowerCase();
+      list = list.filter(t => t.code.toLowerCase().includes(q) ||
+                              t.customer.toLowerCase().includes(q) ||
+                              t.phone.replace(/\s/g, '').includes(q.replace(/\s/g, '')));
+    }
+    return list.sort((a, b) => (b.paidAt || b.date).localeCompare(a.paidAt || a.date));
+  }
+
+  function renderPaymentTable() {
+    const tbody = document.querySelector('#paymentTable tbody');
+    if (!tbody) return;
+    const list = getPaymentList();
+    tbody.innerHTML = list.length ? list.map(t => {
+      const amount = t.paid ? t.finalAmount : t.quote;
+      const paidLbl = tr('dash.payment.status.paid');
+      const pendingLbl = tr('dash.payment.status.pending');
+      const collectLbl = tr('dash.payment.btn.collect');
+      return `
+        <tr>
+          <td><span class="ticket-code">${t.code}</span>${t.invoiceNo ? `<div style="font-size:11px; color:var(--text-3); margin-top:2px;">${t.invoiceNo}</div>` : ''}</td>
+          <td><div class="device">${t.customer}<div class="meta">${t.phone}</div></div></td>
+          <td><div class="device">${t.device}<div class="meta">${t.issue}</div></div></td>
+          <td>${t.tech}</td>
+          <td style="font-weight:700;">${fmtVND(amount)}</td>
+          <td><span class="pay-status-badge ${t.paid ? 'paid' : 'pending'}"><span class="dot"></span>${t.paid ? paidLbl : pendingLbl}</span></td>
+          <td>${t.paid ? `<span class="pay-method-pill">${payMethodLabel(t.paidMethod)}</span><div style="font-size:11px; color:var(--text-3); margin-top:3px;">${(t.paidAt || '').slice(11, 16)}</div>` : '—'}</td>
+          <td>
+            <div class="icon-row">
+              ${t.paid
+                ? `<button title="Xem hoá đơn" onclick="viewInvoice('${t.code}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>`
+                : `<button class="btn btn-primary" style="height:32px; padding:0 14px; font-size:13px;" onclick="openPayment('${t.code}')">${collectLbl}</button>`
+              }
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('') : `<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-3);">${paymentFilter === 'pending' ? 'Không có phiếu nào chờ thu' : 'Không có hoá đơn nào'}</td></tr>`;
+    updatePaymentCounts();
+  }
+
+  function updatePaymentCounts() {
+    const eligible = TICKETS.filter(eligibleForPayment);
+    const pending = eligible.filter(t => !t.paid);
+    const paid = eligible.filter(t => t.paid);
+    const today = new Date().toISOString().slice(0, 10);
+    const paidToday = paid.filter(t => (t.paidAt || '').startsWith(today));
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setText('pf-pending', pending.length);
+    setText('pf-paid', paid.length);
+    setText('pf-all', eligible.length);
+    setText('payStatPending', pending.length);
+    setText('payStatPendingMeta', fmtVND(pending.reduce((s, t) => s + t.quote, 0)));
+    setText('payStatToday', paidToday.length);
+    setText('payStatTodayMeta', fmtVND(paidToday.reduce((s, t) => s + (t.finalAmount || 0), 0)));
+    setText('payStatTotal', fmtVND(paid.reduce((s, t) => s + (t.finalAmount || 0), 0)));
+    setText('payStatTotalMeta', paid.length + ' ' + tr('dash.payment.stat.invoices'));
+  }
+
+  /* Payment filter buttons */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#paymentFilters button');
+    if (btn) {
+      paymentFilter = btn.dataset.pfilter;
+      document.querySelectorAll('#paymentFilters button').forEach(b => b.classList.toggle('active', b === btn));
+      renderPaymentTable();
+    }
+    const opt = e.target.closest('#pm-methods .pay-method-opt');
+    if (opt) {
+      document.querySelectorAll('#pm-methods .pay-method-opt').forEach(o => o.classList.remove('selected'));
+      opt.classList.add('selected');
+    }
+  });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'paySearch') {
+      paymentSearch = e.target.value.trim();
+      renderPaymentTable();
+    }
+    if (e.target.id === 'pm-discount') refreshPaymentTotals();
+    if (e.target.id === 'pm-received') {
+      const digits = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = digits ? (+digits).toLocaleString('vi-VN') : '';
+      refreshPaymentTotals();
+    }
+  });
+
+  function openPayment(code) {
+    const t = TICKETS.find(x => x.code === code);
+    if (!t) return;
+    currentPaymentCode = code;
+    document.getElementById('pm-code').textContent = t.code;
+    document.getElementById('pm-customer').textContent = t.customer;
+    document.getElementById('pm-phone').textContent = t.phone;
+    document.getElementById('pm-device').textContent = t.device;
+    document.getElementById('pm-tech').textContent = t.tech;
+    document.getElementById('pm-issue').textContent = t.issue;
+    document.getElementById('pm-discount').value = 0;
+    document.getElementById('pm-received').value = '';
+    document.getElementById('pm-note').value = '';
+    document.querySelectorAll('#pm-methods .pay-method-opt').forEach(o => o.classList.toggle('selected', o.dataset.method === 'cash'));
+    refreshPaymentTotals();
+    openModal('paymentModal');
+  }
+
+  function refreshPaymentTotals() {
+    const t = TICKETS.find(x => x.code === currentPaymentCode);
+    if (!t) return;
+    const discount = Math.max(0, Math.min(100, +document.getElementById('pm-discount').value || 0));
+    const discountAmt = Math.round(t.quote * discount / 100);
+    const total = t.quote - discountAmt;
+    document.getElementById('pm-subtotal').textContent = fmtVND(t.quote);
+    document.getElementById('pm-discountAmt').textContent = discountAmt > 0 ? '-' + fmtVND(discountAmt) : '0₫';
+    document.getElementById('pm-total').textContent = fmtVND(total);
+    const received = +(document.getElementById('pm-received').value.replace(/[^0-9]/g, '')) || 0;
+    const changeRow = document.getElementById('pm-changeRow');
+    if (received > total) {
+      changeRow.style.display = '';
+      document.getElementById('pm-change').textContent = fmtVND(received - total);
+    } else {
+      changeRow.style.display = 'none';
+    }
+  }
+
+  async function confirmPayment() {
+    const t = TICKETS.find(x => x.code === currentPaymentCode);
+    if (!t) return;
+    const method = document.querySelector('#pm-methods .pay-method-opt.selected')?.dataset.method || 'cash';
+    const discount_pct = Math.max(0, Math.min(100, +document.getElementById('pm-discount').value || 0));
+    const received = parseInt((document.getElementById('pm-received').value || '').replace(/[^0-9]/g, ''), 10) || null;
+    const note = document.getElementById('pm-note').value.trim();
+
+    try {
+      const { payment } = await api('/payments', {
+        method: 'POST',
+        body: {
+          ticket_code: t.code,
+          method,
+          discount_pct,
+          received,
+          note: note || undefined,
+        },
+      });
+      closeModal('paymentModal');
+      await refreshTickets();
+      showToast(`Đã thu ${fmtVND(payment.final_amount)} · ${payment.invoice_no}`);
+      /* Auto-open invoice after 500ms so toast is visible */
+      setTimeout(() => viewInvoice(t.code), 500);
+    } catch (err) {
+      showToast('Lỗi thu tiền: ' + err.message);
+    }
+  }
+
+  function viewInvoice(code) {
+    const t = TICKETS.find(x => x.code === code);
+    if (!t || !t.paid) return;
+    const w = window.open('', '_blank', 'width=480,height=720');
+    if (!w) {
+      showToast('Trình duyệt chặn pop-up. Bật pop-up để xem hoá đơn.');
+      return;
+    }
+    w.document.open();
+    w.document.write(buildInvoiceHTML(t));
+    w.document.close();
+  }
+
+  function buildInvoiceHTML(t) {
+    const subtotal = t.quote;
+    const discount = t.discountAmt || 0;
+    const total = t.finalAmount || t.quote;
+    return `<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><title>Hoá đơn ${t.invoiceNo}</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI',Roboto,system-ui,sans-serif;max-width:420px;margin:30px auto;padding:24px;color:#1e293b}
+.head{text-align:center;border-bottom:2px dashed #94a3b8;padding-bottom:14px;margin-bottom:14px}
+.head h1{font-size:22px;margin:0 0 4px;color:#2563eb;letter-spacing:1px}
+.head .sub{font-size:12px;color:#64748b}
+.head .addr{font-size:11px;color:#64748b;margin-top:6px;line-height:1.5}
+h2{font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:1.5px;text-align:center;color:#334155}
+.row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;gap:10px}
+.row .k{color:#64748b;flex-shrink:0}
+.row .v{font-weight:600;text-align:right;word-break:break-word}
+.items{border-top:1px dashed #cbd5e1;border-bottom:1px dashed #cbd5e1;padding:10px 0;margin:14px 0}
+.total-row{font-size:18px;font-weight:800;color:#2563eb;padding:10px 0 2px;border-top:1px solid #cbd5e1;margin-top:6px}
+.foot{text-align:center;font-size:11px;color:#64748b;margin-top:22px;padding-top:14px;border-top:1px dashed #94a3b8;line-height:1.6}
+.stamp{display:inline-block;margin-top:10px;padding:6px 14px;border:2px dashed #15803d;color:#15803d;font-weight:700;transform:rotate(-3deg);letter-spacing:2px;font-size:13px}
+.actions{display:flex;gap:10px;margin:18px 0 0}
+.actions button{flex:1;padding:10px;border:none;border-radius:8px;background:#2563eb;color:#fff;font:inherit;font-weight:600;cursor:pointer}
+.actions button.ghost{background:#e2e8f0;color:#334155}
+@media print{body{margin:0;padding:12px;max-width:none}.actions{display:none}}
+</style></head><body>
+<div class="head">
+  <h1>FFC — FIX FAST CENTER</h1>
+  <div class="sub">Sửa chữa thiết bị điện tử chuyên nghiệp</div>
+  <div class="addr">227 Nguyễn Văn Cừ, Q.5, TP.HCM<br>Hotline: 1900 0095 · ffcenter.vn</div>
+</div>
+<h2>Hoá đơn thanh toán</h2>
+<div class="row"><span class="k">Số HĐ</span><span class="v">${t.invoiceNo}</span></div>
+<div class="row"><span class="k">Mã phiếu</span><span class="v">${t.code}</span></div>
+<div class="row"><span class="k">Ngày</span><span class="v">${t.paidAt}</span></div>
+<div class="row"><span class="k">Hình thức</span><span class="v">${payMethodLabel(t.paidMethod)}</span></div>
+<div class="items">
+  <div style="font-size:13px;font-weight:700;margin-bottom:6px">Khách hàng</div>
+  <div class="row"><span class="k">Tên</span><span class="v">${t.customer}</span></div>
+  <div class="row"><span class="k">SĐT</span><span class="v">${t.phone}</span></div>
+  <div style="font-size:13px;font-weight:700;margin:10px 0 6px">Dịch vụ</div>
+  <div class="row"><span class="k">Thiết bị</span><span class="v">${t.device}</span></div>
+  <div class="row"><span class="k">Mô tả</span><span class="v">${t.issue}</span></div>
+  <div class="row"><span class="k">KTV</span><span class="v">${t.tech}</span></div>
+</div>
+<div class="row"><span class="k">Tạm tính</span><span class="v">${fmtVND(subtotal)}</span></div>
+${discount > 0 ? `<div class="row"><span class="k">Giảm giá (${t.discount}%)</span><span class="v" style="color:#dc2626">-${fmtVND(discount)}</span></div>` : ''}
+<div class="row total-row"><span class="k">TỔNG CỘNG</span><span class="v">${fmtVND(total)}</span></div>
+${t.paidNote ? `<div style="font-size:12px;color:#64748b;margin-top:14px;padding:8px;background:#f1f5f9;border-radius:6px"><strong>Ghi chú:</strong> ${t.paidNote}</div>` : ''}
+<div class="foot">
+  <div class="stamp">ĐÃ THANH TOÁN</div>
+  <div style="margin-top:14px">Cảm ơn quý khách đã sử dụng dịch vụ!</div>
+  <div>Bảo hành: 6 tháng kể từ ngày thanh toán</div>
+</div>
+<div class="actions">
+  <button onclick="window.print()">In hoá đơn</button>
+  <button class="ghost" onclick="window.close()">Đóng</button>
+</div>
+</body></html>`;
+  }
+
+  /* ============================================================
+     CHAT SUPPORT — shared storage between admin and customer side.
+     Schema (localStorage 'ffc_chats'):
+       { "<phoneKey>": {
+           name, phone, customerUnread, adminUnread, lastAt,
+           messages: [{ from: 'customer'|'admin'|'system', text, at }]
+       } }
+     Cross-tab sync via `storage` event so admin reply appears on the
+     customer's open chat.html immediately.
+     ============================================================ */
+  const CHAT_KEY = 'ffc_chats';
+  const phoneKey = (p) => (p || '').replace(/\s/g, '');
+  function loadChats() {
+    try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '{}'); }
+    catch (_) { return {}; }
+  }
+  function saveChats(obj) {
+    localStorage.setItem(CHAT_KEY, JSON.stringify(obj));
+  }
+  /* Seed sample threads so admin sees something on first load (only if empty) */
+  function seedChats() {
+    if (Object.keys(loadChats()).length) return;
+    const now = new Date();
+    const ago = (mins) => new Date(now - mins * 60000).toISOString().slice(0, 16);
+    const sample = {};
+    [
+      { phone: '0901 234 567', name: 'Trần Thu Hà', msgs: [
+        { from: 'customer', text: 'Anh ơi, khi nào em lấy được máy Samsung S24 đã sửa vậy?', mins: 35 },
+        { from: 'admin',    text: 'Chào chị Hà, máy đã thay xong màn, đang test cuối — khoảng 30 phút nữa chị ghé được.', mins: 32 },
+        { from: 'system',   text: 'Phiếu FFC-0094 đã chuyển sang [Đang test]', mins: 30 },
+      ]},
+      { phone: '0908 111 222', name: 'Lê Quốc Anh', msgs: [
+        { from: 'customer', text: 'MacBook em bị lỗi gì vậy ạ?', mins: 90 },
+      ]},
+      { phone: '0918 555 222', name: 'Bùi Hải Đăng', msgs: [
+        { from: 'customer', text: 'Phục hồi dữ liệu có lấy được hết ảnh không anh?', mins: 180 },
+        { from: 'admin',    text: 'Anh Đăng, em đã quét xong, lấy được ~92% file. Chiều mai có kết quả cụ thể.', mins: 175 },
+      ]},
+    ].forEach(({ phone, name, msgs }) => {
+      const k = phoneKey(phone);
+      const messages = msgs.map(m => ({ from: m.from, text: m.text, at: ago(m.mins) }));
+      const adminUnread = messages.filter(m => m.from === 'customer').length -
+                          messages.filter(m => m.from === 'admin').length;
+      sample[k] = {
+        name, phone,
+        messages,
+        customerUnread: 0,
+        adminUnread: Math.max(0, adminUnread),
+        lastAt: messages[messages.length - 1].at,
+      };
+    });
+    saveChats(sample);
+  }
+
+  let currentChatKey = null;
+  let chatFilter = 'all';
+
+  function renderChatList() {
+    const all = loadChats();
+    const items = Object.entries(all)
+      .map(([k, c]) => ({ k, ...c }))
+      .filter(c => chatFilter === 'all' || c.adminUnread > 0)
+      .sort((a, b) => (b.lastAt || '').localeCompare(a.lastAt || ''));
+
+    const listEl = document.getElementById('chatList');
+    if (!listEl) return;
+    listEl.innerHTML = items.length ? items.map(c => {
+      const initials = (c.name || '?').split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+      const lastMsg = c.messages[c.messages.length - 1];
+      const prefix = lastMsg ? (lastMsg.from === 'admin' ? 'Bạn: ' : lastMsg.from === 'system' ? '⚙ ' : '') : '';
+      return `
+        <div class="chat-row ${c.k === currentChatKey ? 'active' : ''}" onclick="openChat('${c.k}')">
+          <div class="avatar">${initials}</div>
+          <div class="info">
+            <div class="name">${c.name}</div>
+            <div class="last">${prefix}${(lastMsg?.text || '').slice(0, 50)}</div>
+          </div>
+          <div class="meta">
+            ${(c.lastAt || '').slice(11, 16)}
+            ${c.adminUnread > 0 ? `<div class="badge-unread">${c.adminUnread}</div>` : ''}
+          </div>
+        </div>
+      `;
+    }).join('') : `<div class="chat-empty" style="height:100%"><div data-i18n="dash.chat.no_threads">Chưa có cuộc trò chuyện nào</div></div>`;
+
+    /* Update sidebar badge (sum admin unread) */
+    const totalUnread = Object.values(all).reduce((s, c) => s + (c.adminUnread || 0), 0);
+    const badge = document.getElementById('supportBadge');
+    if (badge) {
+      badge.textContent = totalUnread;
+      badge.style.display = totalUnread > 0 ? '' : 'none';
+    }
+  }
+
+  function openChat(key) {
+    const all = loadChats();
+    const c = all[key];
+    if (!c) return;
+    currentChatKey = key;
+
+    /* Mark all as read for admin */
+    if (c.adminUnread) {
+      c.adminUnread = 0;
+      all[key] = c;
+      saveChats(all);
+    }
+
+    const thread = document.getElementById('chatThread');
+    const initials = (c.name || '?').split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+    const msgs = c.messages.map(m => {
+      const cls = m.from;
+      const time = (m.at || '').slice(11, 16);
+      const author = m.from === 'system' ? '⚙ Hệ thống' : '';
+      return `<div class="msg ${cls}">${author ? `<strong>${author}:</strong> ` : ''}${escapeHtml(m.text)}<span class="at">${time}</span></div>`;
+    }).join('');
+
+    thread.innerHTML = `
+      <div class="chat-thread-head">
+        <div class="avatar">${initials}</div>
+        <div class="who">
+          <div class="name">${c.name}</div>
+          <div class="meta">${c.phone} · ${c.messages.length} tin nhắn</div>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chatMsgs">${msgs}</div>
+      <form class="chat-reply" onsubmit="event.preventDefault(); sendAdminReply()">
+        <input id="adminReplyInput" type="text" placeholder="Trả lời ${c.name}..." autocomplete="off" />
+        <button type="submit">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          <span data-i18n="dash.chat.send">Gửi</span>
+        </button>
+      </form>
+    `;
+    const msgsEl = document.getElementById('chatMsgs');
+    if (msgsEl) msgsEl.scrollTop = msgsEl.scrollHeight;
+    renderChatList();
+  }
+
+  function sendAdminReply() {
+    const input = document.getElementById('adminReplyInput');
+    if (!input || !currentChatKey) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const all = loadChats();
+    const c = all[currentChatKey];
+    if (!c) return;
+    const now = new Date().toISOString().slice(0, 16);
+    c.messages.push({ from: 'admin', text, at: now });
+    c.customerUnread = (c.customerUnread || 0) + 1;
+    c.lastAt = now;
+    all[currentChatKey] = c;
+    saveChats(all);
+    notifyChatUpdate();
+
+    input.value = '';
+    openChat(currentChatKey);
+    showToast('Đã gửi tin nhắn');
+  }
+
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  /* Filter buttons in chat list */
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('#chatFilter button');
+    if (btn) {
+      document.querySelectorAll('#chatFilter button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chatFilter = btn.dataset.filter;
+      renderChatList();
+    }
+  });
+
+  /* Cross-tab sync via BroadcastChannel (works under file://) + storage event + polling.
+     file:// origin in Chrome sometimes doesn't fire `storage` events between tabs,
+     so we use BroadcastChannel as the primary, with polling as the last-resort. */
+  let chatBC = null;
+  try { chatBC = new BroadcastChannel('ffc_chats'); } catch (_) {}
+  function notifyChatUpdate() { try { chatBC && chatBC.postMessage({ at: Date.now() }); } catch (_) {} }
+  function refreshChatUI() {
+    renderChatList();
+    if (currentChatKey) openChat(currentChatKey);
+  }
+  if (chatBC) chatBC.addEventListener('message', refreshChatUI);
+  window.addEventListener('storage', (e) => {
+    if (e.key === CHAT_KEY) refreshChatUI();
+  });
+  /* Polling fallback: every 2s, compare a small snapshot signature */
+  let lastChatSig = '';
+  setInterval(() => {
+    const raw = localStorage.getItem(CHAT_KEY) || '';
+    const sig = raw.length + ':' + raw.slice(-80);
+    if (sig !== lastChatSig) {
+      lastChatSig = sig;
+      refreshChatUI();
+    }
+  }, 2000);
+
+  /* Hook: when status changes in modal → push system message into that
+     customer's chat thread so they get notified automatically. */
+  const _origSetStatus = setStatus;
+  setStatus = function (newStatus) {
+    const t = TICKETS.find(x => x.code === currentTicketCode);
+    if (!t) return _origSetStatus(newStatus);
+    const oldStatus = t.status;
+    _origSetStatus(newStatus);
+    if (oldStatus !== newStatus) {
+      const all = loadChats();
+      const k = phoneKey(t.phone);
+      if (!all[k]) {
+        all[k] = { name: t.customer, phone: t.phone, messages: [],
+                   customerUnread: 0, adminUnread: 0, lastAt: '' };
+      }
+      const now = new Date().toISOString().slice(0, 16);
+      all[k].messages.push({
+        from: 'system',
+        text: `Phiếu ${t.code} đã chuyển sang [${statusLabel(newStatus)}]`,
+        at: now
+      });
+      all[k].customerUnread = (all[k].customerUnread || 0) + 1;
+      all[k].lastAt = now;
+      saveChats(all);
+      notifyChatUpdate();
+      renderChatList();
+    }
+  };
+
+  /* ============================================================
+     Topbar global search — live dropdown showing matched tickets
+     ============================================================ */
+  (function wireTopSearch() {
+    const input = document.getElementById('topSearch');
+    const results = document.getElementById('topSearchResults');
+    if (!input || !results) return;
+
+    function update() {
+      const q = input.value.trim();
+      if (!q) { results.classList.remove('open'); return; }
+      const matches = TICKETS.filter(t => matchesSearch(t, q)).slice(0, 8);
+      if (!matches.length) {
+        results.innerHTML = `<div class="empty">Không tìm thấy phiếu nào khớp "${q}"</div>`;
+      } else {
+        results.innerHTML = matches.map(t => `
+          <div class="item" onclick="openFromSearch('${t.code}')">
+            <span class="code">${t.code}</span>
+            <div class="desc">${t.customer} — ${t.device}<div class="meta">${t.phone} · ${t.issue}</div></div>
+            <span class="badge ${t.status}" style="flex-shrink:0;"><span class="dot"></span>${statusLabel(t.status)}</span>
+          </div>
+        `).join('');
+      }
+      results.classList.add('open');
+    }
+
+    input.addEventListener('input', update);
+    input.addEventListener('focus', () => { if (input.value.trim()) update(); });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search')) results.classList.remove('open');
+    });
+    /* Enter → push search query into tickets-pane filter + jump there */
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        results.classList.remove('open');
+        searchQuery = input.value.trim();
+        ticketFilter = 'all';
+        document.querySelectorAll('#ticketFilters button').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+        renderTicketsTable();
+        goPane('tickets');
+      }
+    });
+  })();
+
+  function openFromSearch(code) {
+    document.getElementById('topSearchResults').classList.remove('open');
+    document.getElementById('topSearch').value = '';
+    openTicket(code);
+  }
+
+  /* Filter buttons */
+  document.querySelectorAll('#ticketFilters button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#ticketFilters button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      ticketFilter = btn.dataset.filter;
+      renderTicketsTable();
+    });
+  });
+
+  /* Update filter counts */
+  function updateCounts() {
+    const counts = TICKETS.reduce((m, t) => { m[t.status] = (m[t.status] || 0) + 1; return m; }, {});
+    document.getElementById('cf-all').textContent = TICKETS.length;
+    document.getElementById('cf-waiting').textContent = counts.waiting || 0;
+    document.getElementById('cf-in-progress').textContent = counts['in-progress'] || 0;
+    document.getElementById('cf-testing').textContent = counts.testing || 0;
+    document.getElementById('cf-done').textContent = counts.done || 0;
+    const delEl = document.getElementById('cf-delivered');
+    if (delEl) delEl.textContent = counts.delivered || 0;
+    /* Badge sidebar = số phiếu cần xử lý (chưa giao/huỷ) */
+    const activeCount = TICKETS.filter(t => !['delivered', 'cancelled'].includes(t.status)).length;
+    const badge = document.getElementById('urgentBadge');
+    badge.textContent = activeCount;
+    badge.style.display = activeCount > 0 ? '' : 'none';
+  }
+
+  /* ============================================================
+     Pane switching (hash-driven)
+     ============================================================ */
+  const PANE_KEYS = ['dashboard','intake','tickets','customers','support','inventory','payment','staff','reports','settings'];
+  let currentPane = 'dashboard';
+
+  function applyPaneTitle() {
+    document.getElementById('paneTitle').firstChild.textContent =
+      tr('dash.title.' + currentPane) + ' ';
+    document.getElementById('paneSubtitle').textContent = tr('dash.sub.' + currentPane);
+  }
+
+  function goPane(name) {
+    if (!PANE_KEYS.includes(name)) name = 'dashboard';
+    currentPane = name;
+
+    document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+    document.getElementById('pane-' + name)?.classList.add('active');
+
+    document.querySelectorAll('.nav-list a').forEach(a => {
+      a.classList.toggle('active', a.dataset.pane === name);
+    });
+
+    applyPaneTitle();
+
+    if (location.hash !== '#' + name) location.hash = name;
+
+    /* Lazy-load data khi vào pane lần đầu */
+    if (name === 'staff') loadStaff();
+    if (name === 'reports') loadReports();
+    if (name === 'inventory') loadParts();
+    if (name === 'settings') loadSettings();
+
+    document.querySelector('.main').scrollTop = 0;
+  }
+
+  document.querySelectorAll('.nav-list a').forEach(a => {
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      goPane(a.dataset.pane);
+    });
+  });
+
+  window.addEventListener('hashchange', () => {
+    const name = location.hash.replace('#', '') || 'dashboard';
+    goPane(name);
+  });
+
+  /* ============================================================
+     Intake form handling (mock — just adds to in-memory list)
+     ============================================================ */
+  function nextCode() {
+    const max = TICKETS.reduce((m, t) => Math.max(m, parseInt(t.code.slice(4))), 0);
+    return 'FFC-' + String(max + 1).padStart(4, '0');
+  }
+
+  async function submitIntake(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    /* Resolve technician name → ID. Backend expects technician_id, frontend
+       form uses tech name. We cache the list in window.TECHNICIAN_LIST after
+       first fetch. */
+    let technicianId = null;
+    if (data.assignee) {
+      try {
+        if (!window.TECHNICIAN_LIST) {
+          const r = await api('/technicians');
+          window.TECHNICIAN_LIST = r.data;
+        }
+        const t = window.TECHNICIAN_LIST.find(x => x.name === data.assignee);
+        if (t) technicianId = t.id;
+      } catch (_) {}
+    }
+
+    try {
+      const { ticket } = await api('/tickets', {
+        method: 'POST',
+        body: {
+          phone: data.phone,
+          customer_name: data.customer,
+          device: data.model,
+          device_type: data.deviceType,
+          imei: data.imei || undefined,
+          color: data.color || undefined,
+          issue: data.issue,
+          accessories: form.querySelectorAll('input[name="acc"]:checked').length
+            ? Array.from(form.querySelectorAll('input[name="acc"]:checked')).map(c => c.value) : undefined,
+          quote: parseInt(data.quote) || 0,
+          technician_id: technicianId,
+          urgent: data.priority === 'Gấp' || data.priority === 'VIP',
+          priority: data.priority === 'Gấp' ? 'urgent' : data.priority === 'VIP' ? 'vip' : 'normal',
+          source: 'walkin',
+          internal_note: data.note || undefined,
+          due_date: data.dueDate || undefined,
+        },
+      });
+
+      await refreshTickets();
+      showToast(`Đã tạo phiếu ${ticket.code} cho ${data.customer}`);
+      form.reset();
+      document.getElementById('intakeCode').textContent = nextCode();
+      goPane('tickets');
+    } catch (err) {
+      showToast('Lỗi tạo phiếu: ' + err.message);
+    }
+  }
+
+  function resetIntake() {
+    document.getElementById('intakeForm').reset();
+  }
+
+  /* ============================================================
+     Auth
+     ============================================================ */
+  const ADMIN_KEY = 'pa_admin_logged_in';
+  function logout() {
+    sessionStorage.removeItem(ADMIN_KEY);
+    sessionStorage.removeItem('ffc_role');
+    sessionStorage.removeItem('ffc_user');
+    sessionStorage.removeItem('ffc_customer_me');
+    window.location.href = 'admin.html';
+  }
+
+  /* Apply role-based UI: KTV (technician) chỉ thấy Tổng quan / Phiếu / Chat / Cài đặt.
+     Admin/manager/reception thấy đầy đủ. */
+  (function applyRoleUI() {
+    const role = sessionStorage.getItem('ffc_role') || 'admin';
+    if (role !== 'technician') return;
+    document.querySelectorAll('[data-tech-hide]').forEach(el => el.style.display = 'none');
+    /* Cập nhật name + role hiển thị ở sidebar foot */
+    try {
+      const user = JSON.parse(sessionStorage.getItem('ffc_user') || '{}');
+      if (user.full_name) {
+        document.getElementById('userName').textContent = user.full_name;
+        document.getElementById('userInitials').textContent =
+          user.full_name.split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+      }
+      const roleEl = document.querySelector('.sidebar-foot .role');
+      if (roleEl) { roleEl.textContent = 'Kỹ thuật viên'; roleEl.removeAttribute('data-i18n'); }
+    } catch (_) {}
+    /* Nếu user đang ở pane bị ẩn → đẩy về dashboard */
+    const hash = (location.hash || '').replace('#', '');
+    const hidden = ['intake', 'customers', 'inventory', 'payment', 'staff', 'reports'];
+    if (hidden.includes(hash)) location.hash = 'dashboard';
+  })();
+  /* Allow opening dashboard.html directly during dev (no auth gate)
+     — uncomment to enforce login:
+  if (sessionStorage.getItem(ADMIN_KEY) !== '1') {
+    window.location.href = 'admin.html';
+  }
+  */
+
+  /* ============================================================
+     Theme (light / dark) — persisted in localStorage.
+     Applied via [data-theme="dark"] on <html>.
+     ============================================================ */
+  const THEME_KEY = 'ffc_theme';
+  function applyTheme(theme) {
+    if (theme === 'dark') {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    /* Swap sun/moon icons */
+    const sun = document.getElementById('themeIconSun');
+    const moon = document.getElementById('themeIconMoon');
+    if (sun && moon) {
+      sun.style.display  = theme === 'dark' ? 'block' : 'none';
+      moon.style.display = theme === 'dark' ? 'none'  : 'block';
+    }
+  }
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+  }
+  /* Load saved theme on first render — runs immediately so no flash. */
+  applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+  /* Cross-tab sync (e.g. switch theme in another tab → this one follows) */
+  window.addEventListener('storage', (e) => {
+    if (e.key === THEME_KEY) applyTheme(e.newValue || 'light');
+  });
+
+  /* ============================================================
+     i18n integration — re-render dynamic content on language toggle
+     ============================================================ */
+  function applyLang() {
+    /* i18n.js auto-applies data-i18n on load. After it runs, we still need
+       to redraw tables (status badges) + topbar title since those are
+       built by JS template literals. */
+    renderDashTable();
+    renderTicketsTable();
+    renderCustomers();
+    if (typeof renderPaymentTable === 'function') renderPaymentTable();
+    if (typeof renderTechWorkload === 'function') renderTechWorkload();
+    applyPaneTitle();
+  }
+  window.addEventListener('langchange', applyLang);
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'pa_lang') applyLang();
+  });
+
+  /* Floating language toggle (bottom-right) — small pill that swaps
+     between VI / EN. Calls PA_i18n.setLang() which fires `langchange`. */
+  (function injectLangToggle() {
+    const btn = document.createElement('button');
+    btn.id = 'langToggle';
+    btn.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px; z-index: 100;
+      height: 40px; padding: 0 16px;
+      background: var(--surface); backdrop-filter: blur(14px);
+      border: 1px solid var(--border); border-radius: 999px;
+      font: inherit; font-size: 13px; font-weight: 700;
+      color: var(--navy); cursor: pointer;
+      box-shadow: 0 4px 14px rgba(30, 58, 95, 0.15);
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.15s;
+    `;
+    btn.onmouseenter = () => { btn.style.background = '#fff'; btn.style.borderColor = 'var(--sky)'; };
+    btn.onmouseleave = () => { btn.style.background = 'var(--surface)'; btn.style.borderColor = 'var(--border)'; };
+    function paint() {
+      const lang = window.PA_i18n ? window.PA_i18n.getLang() : 'vi';
+      btn.innerHTML = lang === 'vi' ? '🇻🇳 VIE' : '🇬🇧 ENG';
+      btn.title = lang === 'vi' ? 'Click để chuyển sang English' : 'Click to switch to Vietnamese';
+    }
+    btn.addEventListener('click', () => {
+      if (!window.PA_i18n) return;
+      const next = window.PA_i18n.getLang() === 'vi' ? 'en' : 'vi';
+      window.PA_i18n.setLang(next);
+      paint();
+    });
+    document.body.appendChild(btn);
+    paint();
+  })();
+
+  /* ============================================================
+     Init
+     ============================================================ */
+  /* Xoá demo chat seed cũ (Trần Thu Hà / Lê Quốc Anh / Bùi Hải Đăng)
+     từ thời chưa có backend. Chỉ giữ thread của khách thật. */
+  (function purgeDemoChats() {
+    try {
+      const all = loadChats();
+      const demoNames = ['Trần Thu Hà', 'Lê Quốc Anh', 'Bùi Hải Đăng', 'Test KH', 'Demo Khách'];
+      let changed = false;
+      for (const k of Object.keys(all)) {
+        if (demoNames.includes(all[k].name)) { delete all[k]; changed = true; }
+      }
+      if (changed) saveChats(all);
+    } catch (_) {}
+  })();
+  /* seedChats() — disabled, demo data confused real customers */
+  populateTechDropdowns();
+  renderChatList();
+  loadCustomers();
+
+  /* Load technicians from backend so KTV dropdown trong ticket modal có data */
+  (async () => {
+    try {
+      const r = await api('/technicians');
+      window.TECHNICIAN_LIST = r.data || [];
+    } catch (_) { window.TECHNICIAN_LIST = []; }
+  })();
+
+  /* Load live data from backend (replaces hardcoded TICKETS).
+     Render functions run inside refreshTickets() once data arrives. */
+  refreshTickets().then(() => {
+    document.getElementById('intakeCode').textContent = nextCode();
+    updateCounts();
+  });
+
+  /* Poll every 10s so admin sees new bookings + status changes without F5 */
+  setInterval(refreshTickets, 10000);
+
+  const startPane = location.hash.replace('#', '') || 'dashboard';
+  goPane(startPane);
+</script>
+</body>
+</html>

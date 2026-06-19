@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-<script src="assets/js/i18n.js?v=3"></script>
+<script src="assets/js/i18n.js?v=5"></script>
+<script src="assets/js/api.js?v=1"></script>
 <style>
   :root {
     --purple-600: #9333EA;
@@ -274,11 +275,11 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.5);
-    padding: 48px 48px 0;
+    padding: 28px 36px 24px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 24px;
+    justify-content: flex-start;
+    gap: 18px;
     overflow: hidden;
   }
 
@@ -291,7 +292,7 @@
     text-align: center;
   }
   .left-brand img {
-    width: 480px;
+    width: 280px;
     max-width: 100%;
     height: auto;
     object-fit: contain;
@@ -355,6 +356,22 @@
     margin-top: 6px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+  }
+
+  /* Team group photo — single composite image of FFC technicians */
+  .login-team {
+    margin-top: 4px;
+  }
+  .login-team .team-photo {
+    display: block;
+    width: 100%;
+    height: 42vh;
+    max-height: 380px;
+    min-height: 240px;
+    object-fit: cover;
+    object-position: center 35%;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(30, 58, 95, 0.18);
   }
 
   /* Policy / info link cards — sit close under the stats now */
@@ -1531,6 +1548,11 @@
         </div>
       </div>
 
+      <!-- Team group photo: 3 nhân viên FFC -->
+      <div class="login-team">
+        <img src="assets/images/06bd7749-e597-4117-8b08-29ebad091a61.png?v=1" alt="Đội ngũ kỹ thuật viên FFC" class="team-photo" />
+      </div>
+
       <!-- Policy/info link cards -->
       <div class="info-cards">
         <a href="#" class="info-card" onclick="openPolicy('terms'); return false;">
@@ -1742,7 +1764,7 @@
       </div>
 
       <div class="login-hint" data-i18n="login.hint">
-        💡 Demo: dùng <strong>admin</strong> / <strong>admin</strong>
+        💡 Demo · KTV: <strong>admin</strong>/<strong>admin</strong> · Khách hàng: <strong>khach</strong>/<strong>khach</strong>
       </div>
     </div>
   </div>
@@ -1937,29 +1959,117 @@
 
 <script>
   const STORAGE_KEY = 'pa_chat_history';
-  const ADMIN_KEY = 'pa_admin_logged_in';
+  const ADMIN_KEY   = 'pa_admin_logged_in';
+  const ROLE_KEY    = 'ffc_role';        /* 'admin' | 'customer' */
+  const ME_KEY      = 'ffc_customer_me'; /* { name, phone } when role=customer */
   let chats = [];
   let activeChatId = null;
   let currentFilter = 'waiting';
 
-  /* ---------- AUTH ---------- */
-  if (localStorage.getItem(ADMIN_KEY) === '1') {
-    showApp();
+  /* ---------- AUTH ----------
+     Two demo roles:
+       • admin   /  admin → operations dashboard
+       • khach   /  khach → customer chat (identity auto-filled)
+     The role gate in chat.html / dashboard.html uses `ffc_role` to decide
+     whether a route is allowed for the current session. */
+  const role = sessionStorage.getItem(ROLE_KEY);
+  if (role === 'admin' && sessionStorage.getItem(ADMIN_KEY) === '1') {
+    window.location.href = 'dashboard.html';
+  } else if (role === 'customer') {
+    window.location.href = 'index.html';
   }
 
-  function login() {
-    const u = document.getElementById('loginUser').value.trim();
-    const p = document.getElementById('loginPass').value;
-    if (u === 'admin' && p === 'admin') {
-      localStorage.setItem(ADMIN_KEY, '1');
-      window.location.href = 'index.html';
-    } else {
-      document.getElementById('loginError').textContent = PA_i18n.tr('login.error');
+  /* Demo customer account — seeded into ffc_chats so admin inbox sees them */
+  const DEMO_CUSTOMER = { name: 'Nguyễn Văn Khách', phone: '0900000001' };
+  function seedDemoCustomerThread() {
+    const key = 'ffc_chats';
+    let all = {};
+    try { all = JSON.parse(localStorage.getItem(key) || '{}'); } catch (_) {}
+    const k = DEMO_CUSTOMER.phone.replace(/\s/g, '');
+    if (!all[k]) {
+      const now = new Date().toISOString().slice(0, 16);
+      all[k] = {
+        name: DEMO_CUSTOMER.name,
+        phone: DEMO_CUSTOMER.phone,
+        messages: [{
+          from: 'system',
+          text: `Chào ${DEMO_CUSTOMER.name}, cảm ơn bạn đã liên hệ FFC. Kỹ thuật viên sẽ phản hồi sớm nhất có thể.`,
+          at: now
+        }],
+        customerUnread: 1,
+        adminUnread: 0,
+        lastAt: now
+      };
+      localStorage.setItem(key, JSON.stringify(all));
+    }
+  }
+
+  /**
+   * Login via backend API (POST /api/auth/login or /api/auth/login/customer).
+   *
+   * UX convention preserved from demo:
+   *   - "admin" / staff usernames → admin login route
+   *   - "khach" → mapped to demo customer phone 0900000001 for backwards-compat
+   *   - 10-digit phone → customer login route
+   */
+  async function login() {
+    const userInput = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPass').value;
+    const errorEl = document.getElementById('loginError');
+    errorEl.textContent = '';
+
+    if (!userInput || !password) {
+      errorEl.textContent = PA_i18n.tr('login.error') || 'Vui lòng nhập đầy đủ thông tin';
+      return;
+    }
+
+    /* Demo shortcut: "khach" → use demo phone */
+    const isCustomerPhone = /^\d{9,11}$/.test(userInput) || userInput.toLowerCase() === 'khach';
+    const phone = userInput.toLowerCase() === 'khach' ? '0900000001' : userInput;
+
+    try {
+      if (isCustomerPhone) {
+        const { token, customer } = await api('/auth/login/customer', {
+          method: 'POST',
+          body: { phone, password },
+        });
+        apiToken.set(token);
+        sessionStorage.setItem(ROLE_KEY, 'customer');
+        sessionStorage.setItem(ME_KEY, JSON.stringify({
+          id: customer.id,
+          name: customer.full_name,
+          phone: customer.phone,
+          email: customer.email,
+          address: customer.address,
+          avatar: customer.avatar_url || '',
+        }));
+        seedDemoCustomerThread();
+        window.location.href = 'index.html';
+        return;
+      }
+
+      const { token, user } = await api('/auth/login', {
+        method: 'POST',
+        body: { username: userInput, password },
+      });
+      apiToken.set(token);
+      sessionStorage.setItem(ADMIN_KEY, '1');
+      /* Lưu role thật từ backend (admin/manager/reception/technician) — dashboard dựa vào đây để ẩn pane */
+      sessionStorage.setItem(ROLE_KEY, user.role || 'admin');
+      sessionStorage.setItem('ffc_user', JSON.stringify(user));
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      console.error('[Login error]', err);
+      errorEl.textContent = err.message || PA_i18n.tr('login.error') || 'Đăng nhập thất bại';
     }
   }
 
   function logout() {
-    localStorage.removeItem(ADMIN_KEY);
+    sessionStorage.removeItem(ADMIN_KEY);
+    sessionStorage.removeItem(ROLE_KEY);
+    sessionStorage.removeItem(ME_KEY);
+    sessionStorage.removeItem('ffc_user');
+    if (window.apiToken) apiToken.set(null);
     window.location.href = 'admin.html';
   }
 
