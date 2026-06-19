@@ -3,962 +3,728 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chat với kỹ thuật viên — FFC (Fix Fast Center)</title>
+<title>Hỗ trợ — FFC (Fix Fast Center)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script>
+  /* Apply saved theme synchronously before paint */
+  (function () {
+    try {
+      if (localStorage.getItem('ffc_theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (_) {}
+  })();
+
+  /* Role gate.
+     - Admin: must use the dashboard inbox, never the customer view.
+     - Logged-in customer: chat lives as a floating widget on every page,
+       so send them back to the homepage and auto-open the panel.
+     - Anonymous visitors: stay here (full-page chat with identity prompt). */
+  (function () {
+    try {
+      const role = sessionStorage.getItem('ffc_role');
+      if (role === 'admin' || sessionStorage.getItem('pa_admin_logged_in') === '1') {
+        window.location.replace('dashboard.html#support');
+        return;
+      }
+      if (role === 'customer') {
+        window.location.replace('index.html#chat');
+        return;
+      }
+    } catch (_) {}
+  })();
+</script>
 <script src="assets/js/i18n.js"></script>
 <style>
   :root {
-    --purple-600: #9333EA;
-    --purple-500: #A855F7;
-    --purple-50:  #FAF5FF;
-    --brand-cyan: #06B6D4;
-    --cyan-300:   #67E8F9;
-    --violet-500: #8B5CF6;
-    --neutral-900: #171717;
-    --neutral-800: #262626;
-    --neutral-700: #404040;
-    --neutral-600: #525252;
-    --neutral-500: #737373;
-    --neutral-400: #A3A3A3;
-    --neutral-300: #D4D4D4;
-    --neutral-200: #E5E5E5;
-    --neutral-100: #F5F5F5;
-    --neutral-50:  #FAFAFA;
-    --white:       #FFFFFF;
-    --pa-navy:     #0A1F44;
-    --warning-bg:  #FEF3C7;
-    --warning-text:#92400E;
+    --navy: #1E3A5F;
+    --blue: #2563EB;
+    --sky:  #3B82F6;
+    --sky-light: #60A5FA;
+    --cyan-light: #7DD3FC;
+
+    --bg:        #DBEAFE;
+    --surface:   rgba(255, 255, 255, 0.92);
+    --surface-2: rgba(255, 255, 255, 0.75);
+    --border:    rgba(30, 58, 95, 0.12);
+    --text:      #0F172A;
+    --text-2:    #475569;
+    --text-3:    #94A3B8;
+    --input-bg:  #ffffff;
+    --green:     #16A34A;
+    --amber:     #F59E0B;
+    --red:       #DC2626;
+  }
+  html[data-theme="dark"] {
+    --bg:        #0B1426;
+    --surface:   rgba(22, 32, 50, 0.88);
+    --surface-2: rgba(22, 32, 50, 0.65);
+    --border:    rgba(148, 163, 184, 0.18);
+    --text:      #F1F5F9;
+    --text-2:    #CBD5E1;
+    --text-3:    #94A3B8;
+    --input-bg:  #1E293B;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
-
+  html { background: var(--bg); }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--neutral-50);
-    color: var(--neutral-900);
+    color: var(--text);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
-  }
-
-  .app {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    height: 100vh;
-  }
-
-  /* ============ SIDEBAR ============ */
-  .sidebar {
-    background: var(--white);
-    border-right: 1px solid var(--neutral-200);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .sidebar-top {
-    padding: 16px;
-    border-bottom: 1px solid var(--neutral-200);
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-    color: var(--neutral-900);
-    margin-bottom: 16px;
-  }
-  .brand img { width: 32px; height: 32px; object-fit: contain; }
-  .brand-text { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-
-  .new-chat-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, var(--purple-600), var(--brand-cyan));
-    color: var(--white);
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s;
-    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.25);
-  }
-  .new-chat-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
-  }
-
-  .sidebar-section {
-    padding: 12px 16px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--neutral-500);
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-  }
-
-  .chat-history {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 8px;
-  }
-
-  .chat-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    color: var(--neutral-700);
-    font-size: 14px;
-    margin-bottom: 2px;
-    transition: background 0.15s;
-    position: relative;
-  }
-  .chat-item:hover { background: var(--neutral-100); }
-  .chat-item.active {
-    background: var(--purple-50);
-    color: var(--purple-600);
-    font-weight: 500;
-  }
-  .chat-item .icon { font-size: 14px; opacity: 0.6; }
-  .chat-item .text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  .chat-item .delete-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    border: none;
     background: transparent;
-    color: var(--neutral-500);
-    cursor: pointer;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    flex-shrink: 0;
-    transition: all 0.15s;
-  }
-  .chat-item:hover .delete-btn { display: flex; }
-  .chat-item .delete-btn:hover {
-    background: #FEE2E2;
-    color: #DC2626;
+    min-height: 100vh;
+    overflow: hidden;
   }
 
-  .empty-history {
-    padding: 24px 16px;
-    text-align: center;
-    color: var(--neutral-500);
-    font-size: 13px;
-    line-height: 1.5;
+  /* ============ Floating mesh — same as dashboard / index ============ */
+  .page-bg-mesh {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 900px 700px at 12% 18%, rgba(30, 58, 95, 0.55), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 88% 28%, rgba(59, 130, 246, 0.60), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 50% 72%, rgba(125, 211, 252, 0.55), transparent 60%),
+      radial-gradient(ellipse 620px 600px at 92% 88%, rgba(96, 165, 250, 0.55), transparent 60%);
+    filter: blur(50px);
+    z-index: 0;
+    pointer-events: none;
+  }
+  html[data-theme="dark"] .page-bg-mesh {
+    background:
+      radial-gradient(ellipse 900px 700px at 12% 18%, rgba(59, 130, 246, 0.35), transparent 60%),
+      radial-gradient(ellipse 800px 700px at 88% 28%, rgba(125, 211, 252, 0.28), transparent 60%),
+      radial-gradient(ellipse 700px 600px at 50% 72%, rgba(96, 165, 250, 0.30), transparent 60%),
+      radial-gradient(ellipse 620px 600px at 92% 88%, rgba(59, 130, 246, 0.32), transparent 60%);
   }
 
-  .sidebar-bottom {
-    padding: 12px;
-    border-top: 1px solid var(--neutral-200);
-  }
-  .user-tile {
+  /* ============ Centered chat shell ============ */
+  .app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 10px;
-    cursor: pointer;
+    justify-content: center;
+    padding: 24px;
   }
-  .user-tile:hover { background: var(--neutral-100); }
-  .user-avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--purple-600), var(--brand-cyan));
-    color: var(--white);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600;
-  }
-  .user-name { font-size: 13px; font-weight: 500; }
-  .user-plan { font-size: 11px; color: var(--neutral-500); }
-
-  /* ============ MAIN CHAT ============ */
-  .main {
+  .chat-card {
+    width: 100%;
+    max-width: 720px;
+    height: 100%;
+    max-height: calc(100vh - 48px);
+    background: var(--surface);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: var(--white);
+    box-shadow: 0 12px 40px rgba(30, 58, 95, 0.12);
   }
 
-  .chat-header {
-    padding: 14px 24px;
-    border-bottom: 1px solid var(--neutral-200);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--white);
-  }
-
-  .chat-header-left {
+  /* Header */
+  .chat-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 12px;
   }
-
-  .agent-avatar {
+  .chat-head .home {
     width: 36px; height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--purple-600), var(--brand-cyan));
+    border-radius: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     display: flex; align-items: center; justify-content: center;
-    color: var(--white);
-    font-weight: 700;
+    color: var(--text-2);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .chat-head .home:hover { background: rgba(59, 130, 246, 0.10); color: var(--blue); }
+  .chat-head .home svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  .chat-head .logo {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
     font-size: 14px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
     position: relative;
   }
-  .agent-avatar::after {
-    content: '';
+  .chat-head .logo .dot {
     position: absolute;
-    bottom: -2px; right: -2px;
-    width: 10px; height: 10px;
+    bottom: -1px; right: -1px;
+    width: 11px; height: 11px;
+    background: #22C55E;
+    border: 2px solid var(--surface);
     border-radius: 50%;
-    background: #4ADE80;
-    border: 2px solid var(--white);
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    animation: pulse 1.6s ease-in-out infinite;
   }
-
-  .agent-info .agent-name { font-size: 14px; font-weight: 600; }
-  .agent-info .agent-status { font-size: 12px; color: var(--neutral-500); display: flex; align-items: center; gap: 4px; }
-
-  .chat-header-actions {
-    display: flex;
-    gap: 8px;
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.65; transform: scale(0.86); }
   }
+  .chat-head .info { flex: 1; min-width: 0; }
+  .chat-head .info .title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .chat-head .info .status { font-size: 12px; color: var(--green); font-weight: 500; }
+  html[data-theme="dark"] .chat-head .info .status { color: #4ADE80; }
+
   .icon-btn {
     width: 36px; height: 36px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    background: transparent;
-    border: 1px solid var(--neutral-200);
     cursor: pointer;
+    color: var(--text-2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .icon-btn:hover { background: rgba(59, 130, 246, 0.10); color: var(--blue); }
+  .icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+  /* Identity strip — shows who customer is, change phone */
+  .identity-bar {
+    padding: 8px 20px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-2);
     display: flex;
     align-items: center;
-    justify-content: center;
-    color: var(--neutral-700);
-    transition: all 0.15s;
+    gap: 8px;
   }
-  .icon-btn:hover { background: var(--neutral-100); border-color: var(--neutral-300); }
-
-  /* ============ DISCLAIMER BANNER ============ */
-  .disclaimer {
-    margin: 16px 24px 0;
-    padding: 12px 16px;
-    background: var(--warning-bg);
-    color: var(--warning-text);
-    border-radius: 10px;
-    font-size: 13px;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    line-height: 1.5;
+  .identity-bar .you { color: var(--text); font-weight: 600; }
+  .identity-bar .switch-btn {
+    margin-left: auto;
+    background: transparent;
+    border: none;
+    color: var(--blue);
+    cursor: pointer;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
   }
-  .disclaimer .icon { font-size: 16px; flex-shrink: 0; }
+  .identity-bar .switch-btn:hover { text-decoration: underline; }
 
-  /* ============ MESSAGES ============ */
-  .messages {
+  /* Messages area */
+  .msgs {
     flex: 1;
     overflow-y: auto;
-    padding: 24px;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 8px;
+    scroll-behavior: smooth;
   }
-
-  .messages-inner {
-    max-width: 760px;
-    width: 100%;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  /* Welcome screen */
-  .welcome {
-    text-align: center;
-    padding: 60px 24px;
-    max-width: 720px;
-    margin: 0 auto;
-  }
-  .welcome-logo {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 20px;
+  .msg {
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-wrap: break-word;
     position: relative;
   }
-  .welcome-logo img {
-    width: 100%; height: 100%; object-fit: contain;
-    position: relative; z-index: 2;
-    filter: drop-shadow(0 0 20px rgba(147, 51, 234, 0.4));
-    animation: float-soft 4s ease-in-out infinite;
-  }
-  .welcome-logo::before {
-    content: '';
-    position: absolute;
-    inset: -30px;
-    background: radial-gradient(circle, rgba(147, 51, 234, 0.3), transparent 60%);
-    filter: blur(20px);
-    z-index: 1;
-  }
-  @keyframes float-soft {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-8px); }
-  }
-
-  .welcome h1 {
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 8px;
-  }
-  .welcome h1 .gradient-text {
-    background: linear-gradient(to right, var(--purple-600), var(--brand-cyan));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-  .welcome p {
-    color: var(--neutral-600);
-    margin-bottom: 32px;
-  }
-
-  .suggestions {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-top: 32px;
-  }
-  .suggestion {
-    padding: 16px;
-    border: 1px solid var(--neutral-200);
-    border-radius: 12px;
-    background: var(--white);
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.15s;
-    font-family: inherit;
-  }
-  .suggestion:hover {
-    border-color: var(--purple-600);
-    background: var(--purple-50);
-    transform: translateY(-2px);
-  }
-  .suggestion-cat {
-    font-size: 11px;
-    color: var(--purple-600);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 6px;
-  }
-  .suggestion-text {
-    font-size: 14px;
-    color: var(--neutral-800);
-    line-height: 1.4;
-  }
-
-  /* Message bubbles */
-  .msg {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  .msg.user {
-    flex-direction: row-reverse;
-  }
-  .msg-avatar {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--white);
-  }
-  .msg.user .msg-avatar { background: var(--neutral-800); }
-  .msg.bot .msg-avatar {
-    background: linear-gradient(135deg, var(--purple-600), var(--brand-cyan));
-  }
-
-  .msg-bubble {
-    max-width: 80%;
-    padding: 12px 16px;
-    border-radius: 16px;
-    font-size: 15px;
-    line-height: 1.55;
-  }
-  .msg.user .msg-bubble {
-    background: var(--neutral-900);
-    color: var(--white);
+  .msg .at { display: block; font-size: 10px; opacity: 0.6; margin-top: 4px; }
+  .msg.customer {
+    align-self: flex-end;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
     border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.20);
   }
-  .msg.bot .msg-bubble {
-    background: var(--neutral-100);
-    color: var(--neutral-900);
+  .msg.admin {
+    align-self: flex-start;
+    background: var(--input-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
     border-bottom-left-radius: 4px;
-    white-space: pre-line;
   }
-  .msg.admin .msg-bubble {
-    background: linear-gradient(135deg, #FAF5FF, #F0F9FF);
-    color: var(--neutral-900);
-    border: 1px solid var(--purple-500);
-    border-bottom-left-radius: 4px;
-    white-space: pre-line;
-  }
-  .msg.admin .msg-avatar {
-    background: linear-gradient(135deg, #16A34A, #06B6D4);
+  .msg.admin::before {
+    content: '🔧 KTV FFC';
+    display: block;
+    font-size: 10px;
+    color: var(--blue);
+    font-weight: 700;
+    margin-bottom: 3px;
   }
   .msg.system {
-    justify-content: center;
-  }
-  .msg.system .msg-avatar { display: none; }
-  .msg.system .msg-bubble {
-    background: var(--warning-bg);
-    color: var(--warning-text);
-    font-size: 13px;
+    align-self: center;
+    background: rgba(245, 158, 11, 0.14);
+    color: #B45309;
+    border: 1px dashed rgba(245, 158, 11, 0.4);
+    font-size: 12px;
     font-style: italic;
-    border-radius: 999px;
-    padding: 6px 14px;
-    max-width: 100%;
+    max-width: 86%;
+    text-align: center;
+    padding: 8px 12px;
   }
-  .admin-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: var(--purple-600);
-    color: white;
-    font-size: 10px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    margin-bottom: 6px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
+  html[data-theme="dark"] .msg.system { color: #FCD34D; background: rgba(245, 158, 11, 0.18); }
 
-  /* Source citations under bot answer */
-  .sources {
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px dashed var(--neutral-300);
+  /* Empty state */
+  .empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+    gap: 12px;
+    color: var(--text-2);
+  }
+  .empty .ic {
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.30);
+  }
+  .empty .ic svg { width: 36px; height: 36px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .empty h2 { color: var(--text); font-size: 20px; }
+  .empty p { max-width: 380px; font-size: 14px; }
+  .empty .suggest {
+    margin-top: 10px;
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-  }
-  .source-chip {
-    font-size: 11px;
-    padding: 3px 8px;
-    background: var(--white);
-    border: 1px solid var(--neutral-300);
-    border-radius: 6px;
-    color: var(--neutral-700);
-    cursor: pointer;
-  }
-  .source-chip:hover { border-color: var(--purple-600); color: var(--purple-600); }
-
-  /* Typing indicator */
-  .typing {
-    display: flex;
-    gap: 4px;
-    padding: 16px;
-  }
-  .typing span {
-    width: 8px; height: 8px;
-    background: var(--neutral-400);
-    border-radius: 50%;
-    animation: typing-bounce 1.4s ease-in-out infinite;
-  }
-  .typing span:nth-child(2) { animation-delay: 0.2s; }
-  .typing span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes typing-bounce {
-    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
-    30%           { transform: translateY(-6px); opacity: 1; }
-  }
-
-  /* ============ INPUT BAR ============ */
-  .input-wrap {
-    padding: 12px 24px 24px;
-    background: var(--white);
-  }
-  .input-wrap-inner {
-    max-width: 760px;
-    margin: 0 auto;
-  }
-  .input-bar {
-    display: flex;
-    align-items: flex-end;
     gap: 8px;
-    background: var(--neutral-100);
-    border: 1px solid var(--neutral-200);
-    border-radius: 20px;
-    padding: 8px;
-    transition: border-color 0.15s;
+    justify-content: center;
   }
-  .input-bar:focus-within {
-    border-color: var(--purple-600);
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
-  }
-  .input-bar textarea {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 10px 12px;
-    font-size: 15px;
-    font-family: inherit;
-    resize: none;
-    outline: none;
-    color: var(--neutral-900);
-    max-height: 200px;
-    line-height: 1.5;
-  }
-  .input-bar textarea::placeholder { color: var(--neutral-500); }
-
-  .send-btn {
-    width: 40px; height: 40px;
-    border-radius: 12px;
-    border: none;
-    background: var(--neutral-900);
-    color: var(--white);
+  .empty .suggest button {
+    padding: 8px 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
     cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .empty .suggest button:hover { background: rgba(59, 130, 246, 0.10); color: var(--blue); border-color: var(--sky); }
+
+  /* Reply box */
+  .reply {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    background: var(--surface-2);
+  }
+  .reply input {
+    flex: 1;
+    padding: 11px 16px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--input-bg);
+    color: var(--text);
+    font: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.15s;
+  }
+  .reply input:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+  .reply button {
+    width: 44px; height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
+    transition: transform 0.15s;
+  }
+  .reply button:hover { transform: translateY(-1px); }
+  .reply button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .reply button svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.4; }
+
+  /* Identity prompt overlay */
+  .prompt-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.15s;
+    padding: 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
   }
-  .send-btn:hover { background: var(--purple-600); }
-  .send-btn:disabled { background: var(--neutral-300); cursor: not-allowed; }
-
-  .input-foot {
+  .prompt-overlay.open { opacity: 1; pointer-events: auto; }
+  .prompt-card {
+    background: var(--surface);
+    backdrop-filter: blur(14px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.30);
     text-align: center;
-    font-size: 11px;
-    color: var(--neutral-500);
-    margin-top: 8px;
+  }
+  .prompt-card h2 { color: var(--text); font-size: 20px; margin-bottom: 6px; }
+  .prompt-card p { color: var(--text-2); font-size: 14px; margin-bottom: 18px; }
+  .prompt-card input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font: inherit;
+    font-size: 15px;
+    background: var(--input-bg);
+    color: var(--text);
+    outline: none;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .prompt-card input:focus { border-color: var(--sky); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15); }
+  .prompt-card .name { margin-bottom: 14px; }
+  .prompt-card button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    background: linear-gradient(135deg, var(--navy), var(--blue));
+    color: #fff;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.30);
   }
 
-  /* ============ RESPONSIVE ============ */
-  @media (max-width: 760px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { display: none; }
-    .suggestions { grid-template-columns: 1fr; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after { animation: none !important; }
+  @media (max-width: 560px) {
+    .app { padding: 0; }
+    .chat-card { max-width: 100%; max-height: 100vh; border-radius: 0; }
   }
 </style>
 </head>
 <body>
 
+<div class="page-bg-mesh" aria-hidden="true"></div>
+
 <div class="app">
-  <!-- ========== SIDEBAR ========== -->
-  <aside class="sidebar">
-    <div class="sidebar-top">
-      <a href="index.html" class="brand">
-        <img src="assets/images/logo-ffc.png?v=2" alt="FFC — Fix Fast Center" />
-        <span class="brand-text">FFC</span>
+  <div class="chat-card">
+
+    <!-- Header -->
+    <header class="chat-head">
+      <a href="index.html" class="home" title="Về trang chủ" aria-label="Trang chủ">
+        <svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>
       </a>
-      <button class="new-chat-btn" onclick="newChat()" data-i18n="chat.new">
-        ＋ Cuộc trò chuyện mới
+      <div class="logo">FFC<span class="dot"></span></div>
+      <div class="info">
+        <div class="title" data-i18n="chat.title">Hỗ trợ FFC</div>
+        <div class="status" data-i18n="chat.online">● Kỹ thuật viên đang online</div>
+      </div>
+      <button class="icon-btn" onclick="toggleTheme()" title="Đổi giao diện">
+        <svg id="themeSun" viewBox="0 0 24 24" style="display:none"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/></svg>
+        <svg id="themeMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
-    </div>
-
-    <div class="sidebar-section" id="historyLabel" data-i18n="chat.history">Lịch sử</div>
-    <div class="chat-history" id="chatHistory">
-      <!-- Items rendered by JS from localStorage -->
-    </div>
-
-    <div class="sidebar-bottom">
-      <div class="user-tile">
-        <div class="user-avatar">SP</div>
-        <div>
-          <div class="user-name">Sam Phạm</div>
-          <div class="user-plan" data-i18n="chat.user.role">Khách hàng · Miễn phí</div>
-        </div>
-      </div>
-    </div>
-  </aside>
-
-  <!-- ========== MAIN ========== -->
-  <main class="main">
-    <header class="chat-header">
-      <div class="chat-header-left">
-        <div class="agent-avatar">FFC</div>
-        <div class="agent-info">
-          <div class="agent-name" data-i18n="chat.agent.name">Trợ lý kỹ thuật FFC</div>
-          <div class="agent-status" data-i18n="chat.agent.status">● Đang hoạt động · Phản hồi trong vài giây</div>
-        </div>
-      </div>
-      <div class="chat-header-actions">
-        <button class="icon-btn" title="Lịch sử">⟲</button>
-        <button class="icon-btn" title="Xuất cuộc trò chuyện">↓</button>
-        <button class="icon-btn" title="Tùy chọn">⋯</button>
-      </div>
     </header>
 
-    <div class="disclaimer">
-      <span class="icon">⚠️</span>
-      <span data-i18n="chat.disclaimer">
-        Thông tin từ trợ lý chỉ mang tính tham khảo. Báo giá chính thức và chẩn đoán chính xác cần kỹ thuật viên kiểm tra trực tiếp tại cửa hàng.
-      </span>
+    <!-- Identity strip -->
+    <div class="identity-bar" id="identityBar" style="display:none;">
+      <span data-i18n="chat.you">Bạn là:</span>
+      <span class="you" id="youLabel">—</span>
+      <button class="switch-btn" onclick="switchIdentity()" data-i18n="chat.switch">Đổi tài khoản</button>
+      <button class="switch-btn" onclick="logout()" style="margin-left:12px; color: var(--red);" data-i18n="chat.logout">Đăng xuất</button>
     </div>
 
-    <div class="messages" id="messages">
-      <div class="messages-inner" id="messagesInner">
-        <!-- Welcome screen (shown when no messages) -->
-        <div class="welcome" id="welcome">
-          <div class="welcome-logo">
-            <img src="assets/images/logo-ffc.png?v=2" alt="FFC" />
-          </div>
-          <h1><span data-i18n="chat.welcome.line1">Xin chào! Tôi là</span> <span class="gradient-text" data-i18n="chat.welcome.accent">Trợ lý kỹ thuật FFC</span></h1>
-          <p data-i18n="chat.welcome.sub">Hỏi tôi bất cứ điều gì về sửa chữa, báo giá, lỗi máy hoặc chính sách bảo hành.</p>
+    <!-- Messages or empty state -->
+    <div class="msgs" id="msgs"></div>
 
-          <div class="suggestions">
-            <button class="suggestion" onclick="sendSuggestion(this)">
-              <div class="suggestion-cat" data-i18n="chat.suggest.cat1">🔧 Báo giá sửa chữa</div>
-              <div class="suggestion-text" data-i18n="chat.suggest.text1">Sửa màn hình iPhone 13 Pro Max bao nhiêu tiền và có bảo hành không?</div>
-            </button>
-            <button class="suggestion" onclick="sendSuggestion(this)">
-              <div class="suggestion-cat" data-i18n="chat.suggest.cat2">📱 Lỗi điện thoại</div>
-              <div class="suggestion-text" data-i18n="chat.suggest.text2">Điện thoại tôi tự nhiên không sạc được dù đã đổi cáp — nguyên nhân có thể là gì?</div>
-            </button>
-            <button class="suggestion" onclick="sendSuggestion(this)">
-              <div class="suggestion-cat" data-i18n="chat.suggest.cat3">💻 Lỗi laptop</div>
-              <div class="suggestion-text" data-i18n="chat.suggest.text3">Laptop khởi động chậm và rất nóng khi chơi game — có nên vệ sinh + thay keo tản nhiệt?</div>
-            </button>
-            <button class="suggestion" onclick="sendSuggestion(this)">
-              <div class="suggestion-cat" data-i18n="chat.suggest.cat4">🛡️ Bảo hành</div>
-              <div class="suggestion-text" data-i18n="chat.suggest.text4">Sửa máy ở FFC có bảo hành bao lâu và áp dụng trong trường hợp nào?</div>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Reply -->
+    <form class="reply" onsubmit="event.preventDefault(); send()">
+      <input id="replyInput" type="text" autocomplete="off"
+             placeholder="Nhập tin nhắn cho kỹ thuật viên..."
+             data-i18n-attr="placeholder:chat.placeholder" />
+      <button type="submit" title="Gửi">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </form>
+  </div>
+</div>
 
-    <div class="input-wrap">
-      <div class="input-wrap-inner">
-        <div class="input-bar">
-          <textarea
-            id="input"
-            data-i18n-attr="placeholder:chat.input.placeholder"
-            placeholder="Hỏi về sửa chữa, báo giá, lỗi máy..."
-            rows="1"
-            onkeydown="handleKey(event)"
-            oninput="autoGrow(this)"
-          ></textarea>
-          <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>↑</button>
-        </div>
-        <div class="input-foot" data-i18n="chat.input.foot">
-          Trợ lý có thể trả lời chưa chính xác · Báo giá chính thức cần kiểm tra máy trực tiếp
-        </div>
-      </div>
-    </div>
-  </main>
+<!-- ============ Identity prompt (first visit / switch account) ============ -->
+<div class="prompt-overlay" id="identityPrompt">
+  <div class="prompt-card">
+    <h2 data-i18n="chat.prompt.title">Chào bạn!</h2>
+    <p data-i18n="chat.prompt.sub">Nhập số điện thoại để kết nối với kỹ thuật viên FFC.</p>
+    <form onsubmit="event.preventDefault(); confirmIdentity()">
+      <input type="text" id="promptName" class="name" placeholder="Họ tên của bạn"
+             data-i18n-attr="placeholder:chat.prompt.name_placeholder" />
+      <input type="tel" id="promptPhone" placeholder="Số điện thoại (VD: 0901234567)"
+             data-i18n-attr="placeholder:chat.prompt.phone_placeholder" required />
+      <button type="submit" data-i18n="chat.prompt.submit">Bắt đầu trò chuyện</button>
+    </form>
+  </div>
 </div>
 
 <script>
-  const input = document.getElementById('input');
-  const sendBtn = document.getElementById('sendBtn');
-  const messagesInner = document.getElementById('messagesInner');
-  const welcome = document.getElementById('welcome');
-  const chatHistoryEl = document.getElementById('chatHistory');
-  const historyLabel = document.getElementById('historyLabel');
+  /* ============================================================
+     Shared storage with dashboard's admin inbox.
+     ============================================================ */
+  const CHAT_KEY = 'ffc_chats';
+  const ME_KEY   = 'ffc_customer_me'; /* { phone, name } */
+  const THEME_KEY = 'ffc_theme';
 
-  const STORAGE_KEY = 'pa_chat_history';
+  const phoneKey = (p) => (p || '').replace(/\s/g, '');
 
-  let chats = loadChats();
-  let currentChatId = null;
-  renderHistory();
-
-  /* ---------- Storage ---------- */
   function loadChats() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch { return []; }
+    try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '{}'); }
+    catch (_) { return {}; }
   }
-  function saveChats() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+  function saveChats(obj) { localStorage.setItem(CHAT_KEY, JSON.stringify(obj)); }
+  function loadMe() {
+    try { return JSON.parse(sessionStorage.getItem(ME_KEY) || 'null'); }
+    catch (_) { return null; }
+  }
+  function saveMe(me) { sessionStorage.setItem(ME_KEY, JSON.stringify(me)); }
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  function renderHistory() {
-    chatHistoryEl.innerHTML = '';
-    if (chats.length === 0) {
-      historyLabel.style.display = 'none';
-      const empty = document.createElement('div');
-      empty.className = 'empty-history';
-      empty.textContent = (window.PA_i18n ? PA_i18n.tr('chat.empty') : 'Chưa có cuộc trò chuyện nào. Hỏi câu đầu tiên để bắt đầu!');
-      chatHistoryEl.appendChild(empty);
+  /* ============================================================
+     Identity flow — ask phone on first visit, persist in localStorage.
+     ============================================================ */
+  function showIdentityPrompt() {
+    document.getElementById('identityPrompt').classList.add('open');
+    setTimeout(() => document.getElementById('promptPhone').focus(), 200);
+  }
+  function hideIdentityPrompt() {
+    document.getElementById('identityPrompt').classList.remove('open');
+  }
+  function confirmIdentity() {
+    const phone = document.getElementById('promptPhone').value.trim();
+    const name  = document.getElementById('promptName').value.trim() || 'Khách hàng';
+    if (!phone) return;
+    saveMe({ phone, name });
+    hideIdentityPrompt();
+    renderIdentity();
+    /* Ensure this customer's thread exists in storage */
+    ensureThread();
+    render();
+  }
+  function switchIdentity() {
+    showIdentityPrompt();
+    const me = loadMe();
+    if (me) {
+      document.getElementById('promptPhone').value = me.phone;
+      document.getElementById('promptName').value  = me.name;
+    }
+  }
+  function renderIdentity() {
+    const me = loadMe();
+    const bar = document.getElementById('identityBar');
+    if (me) {
+      document.getElementById('youLabel').textContent = `${me.name} · ${me.phone}`;
+      bar.style.display = '';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
+  function ensureThread() {
+    const me = loadMe();
+    if (!me) return;
+    const all = loadChats();
+    const k = phoneKey(me.phone);
+    if (!all[k]) {
+      all[k] = {
+        name: me.name, phone: me.phone,
+        messages: [],
+        customerUnread: 0, adminUnread: 0, lastAt: ''
+      };
+      saveChats(all);
+    } else if (all[k].name !== me.name) {
+      /* Update name if customer changed it */
+      all[k].name = me.name;
+      saveChats(all);
+    }
+  }
+
+  /* ============================================================
+     Render thread
+     ============================================================ */
+  function render() {
+    const me = loadMe();
+    const msgs = document.getElementById('msgs');
+    if (!me) {
+      msgs.innerHTML = `
+        <div class="empty">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h2 data-i18n="chat.welcome.title">Chào mừng đến với FFC</h2>
+          <p data-i18n="chat.welcome.sub">Vui lòng nhập thông tin để bắt đầu nhắn với kỹ thuật viên.</p>
+        </div>
+      `;
+      if (window.PA_i18n) PA_i18n.applyTranslations();
       return;
     }
-    historyLabel.style.display = '';
-    chats.forEach(c => {
-      const item = document.createElement('div');
-      item.className = 'chat-item' + (c.id === currentChatId ? ' active' : '');
-      item.onclick = () => loadChat(c.id);
-      item.innerHTML = `
-        <span class="icon">💬</span>
-        <span class="text">${escapeHtml(c.title)}</span>
-        <button class="delete-btn" title="Xóa cuộc trò chuyện">✕</button>
+    const all = loadChats();
+    const c = all[phoneKey(me.phone)];
+
+    if (!c || !c.messages.length) {
+      msgs.innerHTML = `
+        <div class="empty">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h2 data-i18n="chat.start.title">Hỏi gì cũng được</h2>
+          <p data-i18n="chat.start.sub">Kỹ thuật viên FFC sẽ phản hồi nhanh chóng. Bạn có thể bắt đầu bằng các gợi ý:</p>
+          <div class="suggest">
+            <button onclick="quickSend(this.textContent)">Khi nào lấy được máy?</button>
+            <button onclick="quickSend(this.textContent)">Cho em xem báo giá</button>
+            <button onclick="quickSend(this.textContent)">Bảo hành bao lâu?</button>
+            <button onclick="quickSend(this.textContent)">Địa chỉ shop ở đâu?</button>
+          </div>
+        </div>
       `;
-      item.querySelector('.delete-btn').onclick = (e) => {
-        e.stopPropagation();
-        deleteChat(c.id);
-      };
-      chatHistoryEl.appendChild(item);
-    });
-  }
+      if (window.PA_i18n) PA_i18n.applyTranslations();
+      return;
+    }
 
-  function deleteChat(id) {
-    if (!confirm('Xóa cuộc trò chuyện này?')) return;
-    chats = chats.filter(c => c.id !== id);
-    saveChats();
-    if (currentChatId === id) newChat();
-    else renderHistory();
-  }
+    msgs.innerHTML = c.messages.map(m => {
+      const time = (m.at || '').slice(11, 16);
+      const cls = m.from;
+      const author = m.from === 'system' ? '⚙ Hệ thống: ' : '';
+      return `<div class="msg ${cls}">${author ? `<strong>${author}</strong>` : ''}${escapeHtml(m.text)}<span class="at">${time}</span></div>`;
+    }).join('');
 
-  function loadChat(id) {
-    const chat = chats.find(c => c.id === id);
-    if (!chat) return;
-    currentChatId = id;
-    messagesInner.innerHTML = '';
-    welcome.style.display = 'none';
-    chat.messages.forEach(m => renderMessage(m.role, m.text, m.sources));
-    renderHistory();
-  }
+    msgs.scrollTop = msgs.scrollHeight;
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
-
-  /* ---------- UI ---------- */
-  input.addEventListener('input', () => {
-    sendBtn.disabled = !input.value.trim();
-  });
-
-  function autoGrow(el) {
-    el.style.height = 'auto';
-    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
-  }
-
-  function handleKey(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
+    /* Mark as read on customer side */
+    if (c.customerUnread) {
+      c.customerUnread = 0;
+      all[phoneKey(me.phone)] = c;
+      saveChats(all);
     }
   }
 
-  function sendSuggestion(btn) {
-    const text = btn.querySelector('.suggestion-text').textContent.trim();
-    input.value = text;
-    sendBtn.disabled = false;
-    sendMessage();
+  function quickSend(text) {
+    document.getElementById('replyInput').value = text;
+    send();
   }
 
-  function newChat() {
-    currentChatId = null;
-    messagesInner.innerHTML = '';
-    messagesInner.appendChild(welcome);
-    welcome.style.display = '';
-    renderHistory();
-  }
-
-  function renderMessage(role, text, sources = []) {
-    welcome.style.display = 'none';
-    const msg = document.createElement('div');
-    msg.className = 'msg ' + role;
-
-    const avatar = document.createElement('div');
-    avatar.className = 'msg-avatar';
-    avatar.textContent = role === 'user' ? 'S' : (role === 'admin' ? '🔧' : 'FFC');
-
-    const bubble = document.createElement('div');
-    bubble.className = 'msg-bubble';
-
-    if (role === 'admin') {
-      const badge = document.createElement('div');
-      badge.className = 'admin-badge';
-      badge.textContent = '✓ KỸ THUẬT VIÊN FFC';
-      bubble.appendChild(badge);
-      const txt = document.createElement('div');
-      txt.textContent = text;
-      bubble.appendChild(txt);
-    } else {
-      bubble.textContent = text;
-    }
-
-    if (sources.length > 0) {
-      const srcWrap = document.createElement('div');
-      srcWrap.className = 'sources';
-      sources.forEach(s => {
-        const chip = document.createElement('span');
-        chip.className = 'source-chip';
-        chip.textContent = '📄 ' + s;
-        srcWrap.appendChild(chip);
-      });
-      bubble.appendChild(srcWrap);
-    }
-
-    msg.appendChild(avatar);
-    msg.appendChild(bubble);
-    messagesInner.appendChild(msg);
-    messagesInner.parentElement.scrollTop = messagesInner.parentElement.scrollHeight;
-  }
-
-  function showTyping() {
-    const msg = document.createElement('div');
-    msg.className = 'msg bot';
-    msg.id = 'typingMsg';
-    msg.innerHTML = `
-      <div class="msg-avatar">FFC</div>
-      <div class="msg-bubble" style="padding:8px 16px;">
-        <div class="typing"><span></span><span></span><span></span></div>
-      </div>
-    `;
-    messagesInner.appendChild(msg);
-    messagesInner.parentElement.scrollTop = messagesInner.parentElement.scrollHeight;
-  }
-
-  function removeTyping() {
-    document.getElementById('typingMsg')?.remove();
-  }
-
-  /* ---------- Bot FAQ (web-only, không thay thế chẩn đoán trực tiếp) ---------- */
-  const FAQ_RULES = [
-    {
-      keywords: ['giá', 'báo giá', 'chi phí', 'bao nhiêu tiền', 'phí', 'sửa bao nhiêu'],
-      reply: 'Báo giá tham khảo tại FFC:\n• Thay màn hình iPhone: 800.000₫ – 4.500.000₫ (tuỳ đời máy)\n• Thay pin: 350.000₫ – 1.200.000₫\n• Vệ sinh + thay keo tản nhiệt laptop: 300.000₫\n• Phục hồi dữ liệu: từ 500.000₫\nGiá chính xác cần kỹ thuật viên kiểm tra trực tiếp.',
-    },
-    {
-      keywords: ['dịch vụ', 'sửa gì', 'service', 'làm được gì'],
-      reply: 'FFC cung cấp 5 nhóm dịch vụ chính:\n• Sửa điện thoại (iPhone, Android)\n• Sửa laptop / Macbook\n• Thay màn hình / pin\n• Vệ sinh & nâng cấp (SSD, RAM)\n• Phục hồi dữ liệu\nMọi dịch vụ đều bảo hành rõ ràng.',
-    },
-    {
-      keywords: ['đăng ký', 'đặt lịch', 'sign up', 'đăng kí', 'tham gia'],
-      reply: 'Bạn có thể đặt lịch sửa miễn phí tại nút "Đặt Lịch Ngay" ở góc phải trên cùng. Kỹ thuật viên sẽ liên hệ xác nhận lịch trong vòng 30 phút.',
-    },
-    {
-      keywords: ['liên hệ', 'hotline', 'email', 'số điện thoại'],
-      reply: '📞 Hotline: 1900 638 315 (8h-22h hàng ngày)\n📧 Email: hello@ffcenter.vn\n💬 Chat trực tiếp với kỹ thuật viên ngay tại đây',
-    },
-    {
-      keywords: ['kỹ thuật viên', 'thợ', 'technician', 'người sửa', 'ai sửa'],
-      reply: 'Đội ngũ FFC gồm 20+ kỹ thuật viên đã qua đào tạo, từng làm tại các trung tâm bảo hành uỷ quyền. Xem hồ sơ chi tiết tại mục "Kỹ thuật viên" trên trang chủ.',
-    },
-    {
-      keywords: ['bảo hành', 'guarantee', 'warranty'],
-      reply: 'Mọi dịch vụ tại FFC đều có bảo hành:\n• Linh kiện chính hãng: 6 – 12 tháng\n• Linh kiện thay thế tương đương: 3 tháng\n• Vệ sinh / nâng cấp: 1 tháng\nBảo hành không áp dụng cho hư hỏng do vào nước, rơi vỡ sau khi sửa.',
-    },
-    {
-      keywords: ['thanh toán', 'payment', 'trả tiền', 'chuyển khoản'],
-      reply: 'FFC hỗ trợ thanh toán qua: Momo, ZaloPay, VietQR, thẻ ATM nội địa, Visa/Master, hoặc tiền mặt tại cửa hàng. Thanh toán sau khi nghiệm thu máy.',
-    },
-    {
-      keywords: ['hoàn tiền', 'refund'],
-      reply: 'FFC cam kết hoàn 100% chi phí dịch vụ nếu lỗi không được sửa đúng như đã cam kết với khách hàng (trong vòng 7 ngày kể từ khi nhận máy).',
-    },
-  ];
-
-  function tryBotReply(question) {
-    const q = question.toLowerCase();
-    for (const rule of FAQ_RULES) {
-      if (rule.keywords.some(k => q.includes(k))) {
-        return rule.reply;
-      }
-    }
-    return null;
-  }
-
-  async function sendMessage() {
+  function send() {
+    const me = loadMe();
+    if (!me) { showIdentityPrompt(); return; }
+    const input = document.getElementById('replyInput');
     const text = input.value.trim();
     if (!text) return;
 
-    /* Create new chat on first message */
-    if (!currentChatId) {
-      currentChatId = 'c_' + Date.now();
-      chats.unshift({
-        id: currentChatId,
-        title: text.slice(0, 50) + (text.length > 50 ? '…' : ''),
-        status: 'bot',
-        messages: [],
-        createdAt: Date.now(),
-      });
+    const all = loadChats();
+    const k = phoneKey(me.phone);
+    if (!all[k]) {
+      all[k] = { name: me.name, phone: me.phone, messages: [], customerUnread: 0, adminUnread: 0, lastAt: '' };
     }
+    const now = new Date().toISOString().slice(0, 16);
+    all[k].messages.push({ from: 'customer', text, at: now });
+    all[k].adminUnread = (all[k].adminUnread || 0) + 1;
+    all[k].lastAt = now;
+    saveChats(all);
 
-    const chat = chats.find(c => c.id === currentChatId);
-    chat.messages.push({ role: 'user', text, ts: Date.now() });
-    saveChats();
-    renderHistory();
-
-    renderMessage('user', text);
     input.value = '';
-    input.style.height = 'auto';
-    sendBtn.disabled = true;
+    render();
 
-    showTyping();
-
-    setTimeout(() => {
-      removeTyping();
-
-      /* If chat already escalated to admin, all messages go to admin */
-      if (chat.status === 'waiting_admin' || chat.status === 'admin_active') {
-        const note = '✓ Câu hỏi đã được gửi đến kỹ thuật viên. Vui lòng chờ phản hồi.';
-        chat.messages.push({ role: 'system', text: note, ts: Date.now() });
-        saveChats();
-        renderMessage('system', note);
-        return;
-      }
-
-      /* Try FAQ bot first */
-      const botReply = tryBotReply(text);
-      if (botReply) {
-        chat.messages.push({ role: 'bot', text: botReply, ts: Date.now() });
-        saveChats();
-        renderMessage('bot', botReply);
-        return;
-      }
-
-      /* No match → escalate to admin */
-      chat.status = 'waiting_admin';
-      chat.waitingSince = Date.now();
-      const escalation =
-        '🤖 Câu hỏi này cần kiểm tra kỹ hơn — tôi đã chuyển đến **kỹ thuật viên FFC**.\n\n' +
-        'Kỹ thuật viên sẽ phản hồi trong vài phút tới. Bạn có thể tiếp tục đặt thêm câu hỏi.';
-      chat.messages.push({ role: 'bot', text: escalation, ts: Date.now() });
-      saveChats();
-      renderMessage('bot', escalation);
-      renderHistory();
-    }, 800);
+    /* Auto-reply from "bot" after a short delay if no real admin response.
+       Demo flavor — in production this would be removed in favor of waiting
+       for a real KTV reply. */
+    setTimeout(() => maybeAutoReply(k), 1500);
   }
 
-  /* ---------- Listen for admin replies (cross-tab sync) ---------- */
-  window.addEventListener('storage', (e) => {
-    if (e.key !== STORAGE_KEY) return;
-    chats = loadChats();
-    if (currentChatId) {
-      const chat = chats.find(c => c.id === currentChatId);
-      if (!chat) return;
-      const lastRendered = messagesInner.querySelectorAll('.msg').length;
-      const newMessages = chat.messages.slice(lastRendered);
-      newMessages.forEach(m => renderMessage(m.role, m.text, m.sources || []));
+  function maybeAutoReply(k) {
+    const all = loadChats();
+    const c = all[k];
+    if (!c) return;
+    const last = c.messages[c.messages.length - 1];
+    if (!last || last.from !== 'customer') return; /* already replied */
+    const lt = last.text.toLowerCase();
+    let reply = null;
+    if (/(khi nào|bao giờ|lấy)/.test(lt))
+      reply = 'Xin lỗi anh/chị, kỹ thuật viên đang bận. Em sẽ kiểm tra phiếu và phản hồi trong vài phút. Nếu gấp anh/chị gọi 1900-xxxx ạ.';
+    else if (/(giá|báo giá|bao nhiêu)/.test(lt))
+      reply = 'Báo giá tham khảo: Thay pin iPhone 720k–1.2tr, Thay màn 800k–4.5tr, Vệ sinh laptop 300k. Giá chính xác cần KTV kiểm tra trực tiếp.';
+    else if (/(bảo hành|warranty)/.test(lt))
+      reply = 'FFC bảo hành: Linh kiện chính hãng 6–12 tháng, linh kiện tương đương 3 tháng, vệ sinh/nâng cấp 1 tháng. Không áp dụng cho vào nước hoặc rơi vỡ.';
+    else if (/(địa chỉ|ở đâu|map)/.test(lt))
+      reply = 'FFC có chi nhánh tại Q.1 (123 Nguyễn Huệ) và Q.10 (456 Sư Vạn Hạnh). Giờ mở cửa 8h–21h hàng ngày.';
+
+    if (reply) {
+      const now = new Date().toISOString().slice(0, 16);
+      c.messages.push({ from: 'admin', text: reply, at: now });
+      c.customerUnread = (c.customerUnread || 0) + 1;
+      c.lastAt = now;
+      all[k] = c;
+      saveChats(all);
+      render();
     }
-    renderHistory();
+  }
+
+  /* ============================================================
+     Cross-tab sync — admin replies in another tab → update here
+     ============================================================ */
+  window.addEventListener('storage', (e) => {
+    if (e.key === CHAT_KEY) render();
+    if (e.key === THEME_KEY) {
+      if (e.newValue === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+      else document.documentElement.removeAttribute('data-theme');
+      syncThemeIcons();
+    }
   });
 
-  /* Re-render dynamic parts when language changes */
-  window.addEventListener('langchange', () => renderHistory());
-</script>
+  /* ============================================================
+     Logout (customer side) — clears identity + role, back to login
+     ============================================================ */
+  function logout() {
+    if (!confirm('Đăng xuất khỏi tài khoản khách hàng?')) return;
+    sessionStorage.removeItem('ffc_role');
+    sessionStorage.removeItem('ffc_customer_me');
+    window.location.href = 'admin.html';
+  }
 
+  /* ============================================================
+     Theme toggle
+     ============================================================ */
+  function syncThemeIcons() {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const sun = document.getElementById('themeSun');
+    const moon = document.getElementById('themeMoon');
+    if (sun)  sun.style.display  = dark ? 'block' : 'none';
+    if (moon) moon.style.display = dark ? 'none'  : 'block';
+  }
+  function toggleTheme() {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    if (next === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem(THEME_KEY, next);
+    syncThemeIcons();
+  }
+
+  /* ============================================================
+     Init
+     ============================================================ */
+  syncThemeIcons();
+  const me = loadMe();
+  if (!me) {
+    showIdentityPrompt();
+  } else {
+    ensureThread();
+  }
+  renderIdentity();
+  render();
+</script>
 </body>
 </html>
