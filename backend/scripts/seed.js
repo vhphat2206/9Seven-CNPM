@@ -53,20 +53,8 @@ function seedCustomers() {
     INSERT INTO customers (phone, full_name, email, address, password)
     VALUES (?, ?, ?, ?, ?)
   `);
-  insert.run('0900000001', 'Nguyễn Văn Khách', 'khach@example.com',  '123 Lê Lợi, Q.1, TP.HCM', hash('khach'));
-  insert.run('0901234567', 'Trần Thu Hà',     null, null, null);
-  insert.run('0908111222', 'Lê Quốc Anh',     null, null, null);
-  insert.run('0937555888', 'Phạm Minh Tú',    null, null, null);
-  insert.run('0987666333', 'Hoàng Lan',       null, null, null);
-  insert.run('0945777999', 'Đỗ Văn Khoa',     null, null, null);
-  insert.run('0902333444', 'Nguyễn Trí',      null, null, null);
-  insert.run('0976234567', 'Vũ Thu',          null, null, null);
-  insert.run('0918555222', 'Bùi Hải Đăng',    null, null, null);
-  insert.run('0901999888', 'Trịnh Nhi',       null, null, null);
-  insert.run('0936124657', 'Lý Phong',        null, null, null);
-  insert.run('0918333111', 'Trương Hằng',     null, null, null);
-  insert.run('0902777666', 'Nguyễn Khánh',    null, null, null);
-  console.log('  ✓ Customers: 13 (khach/khach + 12 walk-ins)');
+  insert.run('0900000001', 'Nguyễn Văn Khách', 'khach@example.com', '123 Lê Lợi, Q.1, TP.HCM', hash('khach'));
+  console.log('  ✓ Customers: 1 (khach/khach — demo login)');
 }
 
 function seedTechnicians() {
@@ -192,9 +180,12 @@ console.log('🌱 Seeding FFC database...\n');
 seedUsers();
 seedCustomers();
 seedTechnicians();
-seedTickets();
-seedPayments();
-seedBookings();
+/* Bỏ phiếu mẫu (tickets/bookings/payments) — chỉ giữ users/KTV/parts.
+   Anh demo data thật trên web, tránh trông "ảo".
+   Nếu cần phiếu mẫu trở lại: bỏ comment 3 dòng dưới. */
+// seedTickets();
+// seedPayments();
+// seedBookings();
 seedParts();
 console.log('\n✓ Done. Database ready at', process.env.DB_PATH || './data/ffc.db');
 console.log('\n📋 Demo credentials:');
