@@ -1486,6 +1486,54 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; }
   }
+
+  /* ========== REGISTER MODAL ========== */
+  .reg-modal {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+    animation: fadeIn 0.2s ease-out;
+  }
+  .reg-modal.open { display: flex; }
+  .reg-card {
+    background: #fff; border-radius: 16px; padding: 32px;
+    width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: slideUp 0.25s ease-out;
+  }
+  .reg-card h2 { margin: 0 0 6px; font-size: 22px; color: #1e293b; font-weight: 700; }
+  .reg-card .sub { margin: 0 0 22px; color: #64748b; font-size: 14px; line-height: 1.5; }
+  .reg-card .form-group { margin-bottom: 14px; }
+  .reg-card label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+  .reg-card input {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+    font-size: 14px; font-family: inherit; transition: border-color 0.15s;
+    box-sizing: border-box;
+  }
+  .reg-card input:focus { outline: none; border-color: #6366F1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+  .reg-card .reg-error {
+    background: #fef2f2; color: #b91c1c; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; margin-bottom: 14px; display: none;
+  }
+  .reg-card .reg-error.show { display: block; }
+  .reg-card .reg-success {
+    background: #f0fdf4; color: #15803d; padding: 10px 14px; border-radius: 8px;
+    font-size: 13px; margin-bottom: 14px; display: none;
+  }
+  .reg-card .reg-success.show { display: block; }
+  .reg-actions { display: flex; gap: 10px; margin-top: 8px; }
+  .reg-actions button {
+    flex: 1; padding: 12px; border-radius: 9px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: transform 0.1s, opacity 0.15s; font-family: inherit;
+    border: none;
+  }
+  .reg-actions .reg-cancel { background: #f1f5f9; color: #475569; }
+  .reg-actions .reg-cancel:hover { background: #e2e8f0; }
+  .reg-actions .reg-submit { background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff; }
+  .reg-actions .reg-submit:hover { opacity: 0.92; }
+  .reg-actions .reg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -1761,7 +1809,7 @@
       </div>
 
       <div class="login-foot">
-        <span data-i18n="login.no_account">Chưa có tài khoản kỹ thuật viên?</span> <a href="#" data-i18n="btn.signup">Đăng Ký</a>
+        <span data-i18n="login.no_account">Chưa có tài khoản?</span> <a href="#" onclick="event.preventDefault(); openRegister();" data-i18n="btn.signup">Đăng Ký</a>
       </div>
 
       <div class="login-hint" data-i18n="login.hint">
@@ -1904,6 +1952,42 @@
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- ========== REGISTER CUSTOMER MODAL ========== -->
+<div class="reg-modal" id="regModal" onclick="if(event.target===this) closeRegister()">
+  <div class="reg-card" role="dialog" aria-labelledby="regTitle">
+    <h2 id="regTitle" data-i18n="register.title">Đăng ký tài khoản khách hàng</h2>
+    <p class="sub" data-i18n="register.sub">Tạo tài khoản để đặt lịch, tra cứu phiếu sửa và nhận thông báo.</p>
+    <div class="reg-error" id="regError"></div>
+    <div class="reg-success" id="regSuccess"></div>
+    <form onsubmit="event.preventDefault(); registerCustomer();">
+      <div class="form-group">
+        <label for="regPhone" data-i18n="register.phone">Số điện thoại *</label>
+        <input type="tel" id="regPhone" pattern="[0-9]{9,11}" required autocomplete="tel" placeholder="0901234567" />
+      </div>
+      <div class="form-group">
+        <label for="regName" data-i18n="register.name">Họ và tên *</label>
+        <input type="text" id="regName" required autocomplete="name" placeholder="Nguyễn Văn A" />
+      </div>
+      <div class="form-group">
+        <label for="regPassword" data-i18n="register.password">Mật khẩu (tối thiểu 6 ký tự) *</label>
+        <input type="password" id="regPassword" minlength="6" required autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label for="regEmail" data-i18n="register.email">Email (không bắt buộc)</label>
+        <input type="email" id="regEmail" autocomplete="email" placeholder="email@example.com" />
+      </div>
+      <div class="form-group">
+        <label for="regAddress" data-i18n="register.address">Địa chỉ (không bắt buộc)</label>
+        <input type="text" id="regAddress" autocomplete="street-address" placeholder="123 Lê Lợi, Quận 1, HCM" />
+      </div>
+      <div class="reg-actions">
+        <button type="button" class="reg-cancel" onclick="closeRegister()" data-i18n="register.cancel">Hủy</button>
+        <button type="submit" class="reg-submit" id="regSubmitBtn" data-i18n="register.submit">Tạo tài khoản</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -2085,6 +2169,65 @@
     pw.type = showing ? 'text' : 'password';
     icon.innerHTML = showing ? EYE_OFF_ICON : EYE_ICON;
     btn.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+  }
+
+  /* ─── Register customer flow ──────────────────────────────
+   * Mở modal → submit POST /auth/register → auto-login → redirect /index.html.
+   * Khách tự đăng ký, không cần admin tạo.
+   */
+  function openRegister() {
+    document.getElementById('regModal').classList.add('open');
+    document.getElementById('regError').classList.remove('show');
+    document.getElementById('regSuccess').classList.remove('show');
+    setTimeout(() => document.getElementById('regPhone').focus(), 100);
+  }
+  function closeRegister() {
+    document.getElementById('regModal').classList.remove('open');
+  }
+  async function registerCustomer() {
+    const phone    = document.getElementById('regPhone').value.trim();
+    const fullName = document.getElementById('regName').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const email    = document.getElementById('regEmail').value.trim();
+    const address  = document.getElementById('regAddress').value.trim();
+    const errorEl  = document.getElementById('regError');
+    const okEl     = document.getElementById('regSuccess');
+    const btn      = document.getElementById('regSubmitBtn');
+    errorEl.classList.remove('show');
+    okEl.classList.remove('show');
+
+    if (!/^\d{9,11}$/.test(phone)) {
+      errorEl.textContent = 'Số điện thoại không hợp lệ (9-11 chữ số)';
+      errorEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      const { token, customer } = await api('/auth/register', {
+        method: 'POST',
+        body: { phone, full_name: fullName, password, email: email || undefined, address: address || undefined },
+      });
+      apiToken.set(token);
+      sessionStorage.setItem(ROLE_KEY, 'customer');
+      sessionStorage.setItem(ME_KEY, JSON.stringify({
+        id: customer.id,
+        name: customer.full_name,
+        phone: customer.phone,
+        email: customer.email,
+        address: customer.address,
+        avatar: '',
+      }));
+      okEl.textContent = PA_i18n.tr('register.success') || 'Đăng ký thành công! Đang đăng nhập…';
+      okEl.classList.add('show');
+      setTimeout(() => { window.location.href = 'index.html'; }, 900);
+    } catch (err) {
+      errorEl.textContent = err.message || 'Đăng ký thất bại';
+      errorEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = PA_i18n.tr('register.submit') || 'Tạo tài khoản';
+    }
   }
 
   /* ---------- Policy modal (PDF viewer) ---------- */
