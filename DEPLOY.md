@@ -13,16 +13,16 @@
 3. Connect GitHub → chọn repo `takidang/9Seven-CNPM`
 4. Branch: chọn **dev**
 5. Render đọc `render.yaml`, hiện preview 2 service:
-   - `9seven-ffc-api` (Web Service Node)
-   - `9seven-ffc-web` (Static Site)
+   - `nineseven-ffc-api` (Web Service Node)
+   - `nineseven-ffc-web` (Static Site)
 6. Click **Apply** → Render build + deploy tự động (~5-7 phút)
 
 ## 3. URL sau khi deploy
 
-- **Frontend** (cho tụi nhóm xem): https://9seven-ffc-web.onrender.com
-- **Backend API**: https://9seven-ffc-api.onrender.com/api/health
-- **Trang đăng nhập admin**: https://9seven-ffc-web.onrender.com/admin.html
-- **Trang dashboard**: https://9seven-ffc-web.onrender.com/dashboard.html
+- **Frontend** (cho tụi nhóm xem): https://nineseven-ffc-web.onrender.com
+- **Backend API**: https://nineseven-ffc-api.onrender.com/api/health
+- **Trang đăng nhập admin**: https://nineseven-ffc-web.onrender.com/admin.html
+- **Trang dashboard**: https://nineseven-ffc-web.onrender.com/dashboard.html
 
 ## 4. Tài khoản demo
 
@@ -48,7 +48,7 @@ Backend ngủ sau **15 phút không có request**. Lần truy cập sau đó ph�
 khoảng 30 giây để Render thức dậy. Đây là giới hạn của plan **free**.
 
 **Fix**: Đăng ký uptimerobot.com (free), tạo monitor ping
-`https://9seven-ffc-api.onrender.com/api/health` mỗi 5 phút → backend không
+`https://nineseven-ffc-api.onrender.com/api/health` mỗi 5 phút → backend không
 bao giờ ngủ.
 
 ### 🔄 Database reset mỗi deploy
@@ -67,8 +67,8 @@ hoặc migrate sang Render Postgres / Turso.
 Render báo lỗi `Service name already taken`:
 
 1. Mở `render.yaml`, đổi 2 chỗ `name:`:
-   - `9seven-ffc-api` → `<tên-mới-api>`
-   - `9seven-ffc-web` → `<tên-mới-web>`
+   - `nineseven-ffc-api` → `<tên-mới-api>`
+   - `nineseven-ffc-web` → `<tên-mới-web>`
 2. Đổi 2 chỗ trong `render.yaml`:
    - `CORS_ORIGIN` → `https://<tên-mới-web>.onrender.com`
 3. Đổi trong [frontend/assets/js/config.js](frontend/assets/js/config.js):

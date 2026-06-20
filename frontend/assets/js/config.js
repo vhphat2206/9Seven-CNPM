@@ -7,7 +7,7 @@
  */
 (function () {
   const host = window.location.hostname;
-  const PROD_API = 'https://9seven-ffc-api.onrender.com/api';
+  const PROD_API = 'https://nineseven-ffc-api.onrender.com/api';
   if (host.endsWith('.onrender.com') || host.endsWith('.vercel.app') || host.endsWith('.netlify.app')) {
     window.FFC_API_BASE = PROD_API;
   }

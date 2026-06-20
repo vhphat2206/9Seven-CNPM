@@ -5,8 +5,8 @@
 #   1. Push code to GitHub.
 #   2. Vào https://dashboard.render.com → New + → Blueprint → chọn repo này.
 #   3. Render đọc file này, tạo 2 service tự động.
-#   4. Frontend URL: https://9seven-ffc-web.onrender.com
-#      Backend  URL: https://9seven-ffc-api.onrender.com
+#   4. Frontend URL: https://nineseven-ffc-web.onrender.com
+#      Backend  URL: https://nineseven-ffc-api.onrender.com
 #
 # Nếu tên trùng (đã có người dùng), đổi `name:` bên dưới — nhớ update
 # CORS_ORIGIN của API + PROD_API trong frontend/assets/js/config.js.
@@ -14,7 +14,7 @@
 services:
   # ─── Backend Node.js + Express + SQLite ──────────────────────
   - type: web
-    name: 9seven-ffc-api
+    name: nineseven-ffc-api
     runtime: node
     plan: free
     region: singapore
@@ -32,11 +32,11 @@ services:
       - key: DB_PATH
         value: ./data/ffc.db
       - key: CORS_ORIGIN
-        value: https://9seven-ffc-web.onrender.com
+        value: https://nineseven-ffc-web.onrender.com
 
   # ─── Frontend Static Site (HTML/CSS/JS) ──────────────────────
   - type: web
-    name: 9seven-ffc-web
+    name: nineseven-ffc-web
     runtime: static
     plan: free
     region: singapore
