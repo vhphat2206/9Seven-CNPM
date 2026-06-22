@@ -133,7 +133,7 @@ Tụi bro, Sprint 1 của t đã xong:
 - 7 task NICE-13..19 đã DONE trên Jira
 - 7 PR đã gửi trên repo: https://github.com/takidang/9Seven-CNPM/pulls
 - Code đã deploy: https://nineseven-ffc-web.onrender.com
-- Login: admin/admin123 (admin), minhtriet/minhtriet (KTV), khach/khach (KH)
+- Login: admin/admin (admin), minhtriet/minhtriet (KTV), khach/khach (KH)
 
 Bro takidang xem qua giúp t.
 ```

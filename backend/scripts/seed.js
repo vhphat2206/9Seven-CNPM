@@ -60,16 +60,34 @@ function seedCustomers() {
 function seedTechnicians() {
   const existing = db.prepare('SELECT COUNT(*) AS c FROM technicians').get().c;
   if (existing > 0) { console.log(`  • Technicians already seeded (${existing} rows) — skip`); return; }
-  const insert = db.prepare(`
-    INSERT INTO technicians (name, specialty, color, hire_date)
-    VALUES (?, ?, ?, ?)
+
+  const nameToSlug = (n) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/gi, 'd')
+    .toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  const insertTech = db.prepare(`
+    INSERT INTO technicians (name, specialty, color, hire_date, user_id)
+    VALUES (?, ?, ?, ?, ?)
   `);
-  insert.run('Minh Triết', 'iPhone',           '#2563eb', '2024-01-15');
-  insert.run('Trúc Ly',    'Thay màn hình',    '#f59e0b', '2024-03-01');
-  insert.run('Tuấn Kiệt',  'Main laptop',      '#7c3aed', '2023-08-22');
-  insert.run('Thanh Mai',  'Vệ sinh',          '#10b981', '2024-06-10');
-  insert.run('Hoài Nam',   'Phục hồi dữ liệu', '#dc2626', '2023-11-05');
-  console.log('  ✓ Technicians: 5');
+  const insertUser = db.prepare(`
+    INSERT INTO users (username, password, full_name, email, role)
+    VALUES (?, ?, ?, ?, 'technician')
+  `);
+
+  const ktvs = [
+    ['Minh Triết', 'iPhone',           '#2563eb', '2024-01-15'],
+    ['Trúc Ly',    'Thay màn hình',    '#f59e0b', '2024-03-01'],
+    ['Tuấn Kiệt',  'Main laptop',      '#7c3aed', '2023-08-22'],
+    ['Thanh Mai',  'Vệ sinh',          '#10b981', '2024-06-10'],
+    ['Hoài Nam',   'Phục hồi dữ liệu', '#dc2626', '2023-11-05'],
+  ];
+
+  ktvs.forEach(([name, specialty, color, hireDate]) => {
+    const slug = nameToSlug(name);
+    const userRes = insertUser.run(slug, hash(slug), name, `${slug}@ffcenter.vn`);
+    insertTech.run(name, specialty, color, hireDate, userRes.lastInsertRowid);
+  });
+
+  console.log(`  ✓ Technicians: 5 (login: minhtriet/minhtriet, trucly/trucly, tuankiet/tuankiet, thanhmai/thanhmai, hoainam/hoainam)`);
 }
 
 function seedTickets() {

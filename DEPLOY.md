@@ -30,7 +30,7 @@ Sau khi deploy, seed script tự tạo:
 
 | Vai trò | Username | Password |
 |---|---|---|
-| Admin | `admin` | `admin123` |
+| Admin | `admin` | `admin` |
 | Manager | `manager` | `manager123` |
 | Lễ tân | `reception` | `reception123` |
 | Thu ngân | `cashier` | `cashier123` |
