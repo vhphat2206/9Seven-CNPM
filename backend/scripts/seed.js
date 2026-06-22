@@ -50,11 +50,11 @@ function seedCustomers() {
   const existing = db.prepare('SELECT COUNT(*) AS c FROM customers').get().c;
   if (existing > 0) { console.log(`  • Customers already seeded (${existing} rows) — skip`); return; }
   const insert = db.prepare(`
-    INSERT INTO customers (phone, full_name, email, address, password)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO customers (phone, username, full_name, email, address, password)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  insert.run('0900000001', 'Nguyễn Văn Khách', 'khach@example.com', '123 Lê Lợi, Q.1, TP.HCM', hash('khach'));
-  console.log('  ✓ Customers: 1 (khach/khach — demo login)');
+  insert.run('0900000001', 'khach', 'Nguyễn Văn Khách', 'khach@example.com', '123 Lê Lợi, Q.1, TP.HCM', hash('Khach123'));
+  console.log('  ✓ Customers: 1 (login: khach / Khach123)');
 }
 
 function seedTechnicians() {

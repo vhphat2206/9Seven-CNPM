@@ -19,42 +19,61 @@ const router = express.Router();
 router.post('/login', (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) {
-    return res.status(400).json({ error: 'Thiếu username hoặc password' });
+    return res.status(400).json({ error: 'Thiếu tên đăng nhập hoặc mật khẩu' });
   }
 
-  const user = db.prepare(
+  /* Try staff/KTV first (users table) */
+  const staff = db.prepare(
     'SELECT id, username, password, full_name, email, role, avatar_url, is_active FROM users WHERE username = ?'
   ).get(username);
 
-  if (!user || !user.is_active) {
+  if (staff && staff.is_active) {
+    if (!bcrypt.compareSync(password, staff.password)) {
+      return res.status(401).json({ error: 'Mật khẩu không đúng' });
+    }
+    const token = signToken({
+      sub: staff.id, role: staff.role, name: staff.full_name, username: staff.username,
+    });
+    const { password: _, ...safeUser } = staff;
+    return res.json({ token, user: safeUser });
+  }
+
+  /* Fallback: customer (lookup by username column) */
+  const customer = db.prepare(
+    `SELECT id, phone, username, full_name, email, address, password, avatar_url
+     FROM customers WHERE username = ?`
+  ).get(username);
+
+  if (!customer || !customer.password) {
     return res.status(401).json({ error: 'Tài khoản không tồn tại hoặc đã bị khoá' });
   }
-  if (!bcrypt.compareSync(password, user.password)) {
+  if (!bcrypt.compareSync(password, customer.password)) {
     return res.status(401).json({ error: 'Mật khẩu không đúng' });
   }
 
   const token = signToken({
-    sub: user.id, role: user.role, name: user.full_name, username: user.username,
+    sub: customer.id, role: 'customer', name: customer.full_name, phone: customer.phone,
   });
-  const { password: _, ...safeUser } = user;
-  res.json({ token, user: safeUser });
+  const { password: _, ...safeCustomer } = customer;
+  res.json({ token, customer: safeCustomer });
 });
 
-/* ─── Customer login (by phone + password) ───────────────── */
+/* ─── Customer login (by phone OR username + password) ───────
+ * Giữ lại để backward-compatible với code FE cũ. */
 router.post('/login/customer', (req, res) => {
-  const { phone, password } = req.body || {};
-  if (!phone || !password) {
-    return res.status(400).json({ error: 'Thiếu số điện thoại hoặc mật khẩu' });
+  const { phone, username, password } = req.body || {};
+  const identifier = (username || phone || '').toString().replace(/\s/g, '');
+  if (!identifier || !password) {
+    return res.status(400).json({ error: 'Thiếu tên đăng nhập/số điện thoại hoặc mật khẩu' });
   }
 
-  const phoneKey = String(phone).replace(/\s/g, '');
   const customer = db.prepare(
-    `SELECT id, phone, full_name, email, address, password, avatar_url
-     FROM customers WHERE REPLACE(phone, ' ', '') = ?`
-  ).get(phoneKey);
+    `SELECT id, phone, username, full_name, email, address, password, avatar_url
+     FROM customers WHERE username = ? OR REPLACE(phone, ' ', '') = ?`
+  ).get(identifier, identifier);
 
   if (!customer || !customer.password) {
-    return res.status(401).json({ error: 'Số điện thoại chưa đăng ký hoặc chưa đặt mật khẩu' });
+    return res.status(401).json({ error: 'Tài khoản không tồn tại hoặc chưa đặt mật khẩu' });
   }
   if (!bcrypt.compareSync(password, customer.password)) {
     return res.status(401).json({ error: 'Mật khẩu không đúng' });
@@ -69,31 +88,41 @@ router.post('/login/customer', (req, res) => {
 
 /* ─── Customer self-register ──────────────────────────────── */
 router.post('/register', (req, res) => {
-  const { phone, full_name, password, email, address } = req.body || {};
-  if (!phone || !full_name || !password) {
-    return res.status(400).json({ error: 'Thiếu thông tin bắt buộc (phone, full_name, password)' });
+  const { phone, username, full_name, password, email, address } = req.body || {};
+  if (!phone || !username || !full_name || !password) {
+    return res.status(400).json({ error: 'Thiếu thông tin bắt buộc (họ tên, số điện thoại, tên đăng nhập, mật khẩu)' });
   }
-  if (password.length < 6) {
-    return res.status(400).json({ error: 'Mật khẩu phải tối thiểu 6 ký tự' });
+  /* Username: only a-z, 0-9, no spaces, no diacritics, no special chars */
+  if (!/^[a-z0-9]{3,30}$/.test(username)) {
+    return res.status(400).json({ error: 'Tên đăng nhập phải 3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu, không khoảng trắng, không ký tự đặc biệt' });
+  }
+  /* Phone: 9-11 digits */
+  if (!/^\d{9,11}$/.test(String(phone).replace(/\s/g, ''))) {
+    return res.status(400).json({ error: 'Số điện thoại không hợp lệ (9-11 chữ số)' });
+  }
+  /* Password: ≥8 chars, has uppercase + lowercase + digit */
+  if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+    return res.status(400).json({ error: 'Mật khẩu tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và số' });
   }
 
   const hash = bcrypt.hashSync(password, 10);
 
   try {
     const result = db.prepare(`
-      INSERT INTO customers (phone, full_name, email, address, password)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(phone, full_name, email || null, address || null, hash);
+      INSERT INTO customers (phone, username, full_name, email, address, password)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(String(phone).replace(/\s/g, ''), username.toLowerCase(), full_name, email || null, address || null, hash);
 
     const id = result.lastInsertRowid;
-    const token = signToken({ sub: id, role: 'customer', name: full_name, phone });
+    const token = signToken({ sub: id, role: 'customer', name: full_name, phone, username });
     res.status(201).json({
       token,
-      customer: { id, phone, full_name, email, address },
+      customer: { id, phone, username, full_name, email, address },
     });
   } catch (err) {
     if (err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
-      return res.status(409).json({ error: 'Số điện thoại đã được đăng ký' });
+      const msg = err.message.includes('username') ? 'Tên đăng nhập đã tồn tại' : 'Số điện thoại đã được đăng ký';
+      return res.status(409).json({ error: msg });
     }
     throw err;
   }

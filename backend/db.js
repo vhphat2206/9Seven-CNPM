@@ -21,6 +21,17 @@ db.exec(schema);
 /* ─── Migrations cho DB cũ ─────────────────────────────────
    CREATE TABLE IF NOT EXISTS không cập nhật CHECK constraint
    nếu bảng đã tồn tại. Ta phải migrate tay cho các DB cũ. */
+(function migrateCustomersUsername() {
+  const cols = db.prepare("PRAGMA table_info(customers)").all();
+  if (cols.find(c => c.name === 'username')) return;
+  console.log('[migration] customers.username column thiếu — đang thêm...');
+  db.exec(`
+    ALTER TABLE customers ADD COLUMN username TEXT;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_username ON customers(username);
+  `);
+  console.log('[migration] customers.username added OK');
+})();
+
 (function migrateUsersRoleCheck() {
   const row = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='users'").get();
   if (!row || row.sql.includes("'technician'")) return;

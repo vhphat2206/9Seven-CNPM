@@ -34,6 +34,7 @@ CREATE INDEX IF NOT EXISTS idx_users_role     ON users(role);
 CREATE TABLE IF NOT EXISTS customers (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   phone        TEXT NOT NULL UNIQUE,           -- định danh chính
+  username     TEXT UNIQUE,                     -- tên đăng nhập (lowercase, no diacritics, no special chars)
   full_name    TEXT NOT NULL,
   email        TEXT,
   address      TEXT,
@@ -48,8 +49,9 @@ CREATE TABLE IF NOT EXISTS customers (
   updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
-CREATE INDEX IF NOT EXISTS idx_customers_name  ON customers(full_name);
+CREATE INDEX IF NOT EXISTS idx_customers_phone    ON customers(phone);
+CREATE INDEX IF NOT EXISTS idx_customers_username ON customers(username);
+CREATE INDEX IF NOT EXISTS idx_customers_name     ON customers(full_name);
 
 -- ============================================================
 -- 3. TECHNICIANS (kỹ thuật viên)

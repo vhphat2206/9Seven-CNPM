@@ -1487,6 +1487,29 @@
     *, *::before, *::after { animation: none !important; }
   }
 
+  /* ========== BRAND TAGLINE BLOCK (thay cho team photo cũ) ========== */
+  .brand-tagline-block {
+    background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(59,130,246,0.05));
+    border: 1px solid rgba(99,102,241,0.15);
+    border-radius: 16px;
+    padding: 28px 24px;
+    margin: 14px 0 22px;
+    text-align: center;
+  }
+  .brand-tagline-title {
+    margin: 0 0 10px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.4;
+  }
+  .brand-tagline-sub {
+    margin: 0;
+    font-size: 13.5px;
+    color: #475569;
+    line-height: 1.55;
+  }
+
   /* ========== REGISTER MODAL ========== */
   .reg-modal {
     display: none; position: fixed; inset: 0; z-index: 2000;
@@ -1597,9 +1620,12 @@
         </div>
       </div>
 
-      <!-- Team group photo: 3 nhân viên FFC -->
-      <div class="login-team">
-        <img src="assets/images/06bd7749-e597-4117-8b08-29ebad091a61.png?v=1" alt="Đội ngũ kỹ thuật viên FFC" class="team-photo" />
+      <!-- Tagline thay thế cho team photo -->
+      <div class="brand-tagline-block">
+        <h2 class="brand-tagline-title" data-i18n="brand.tagline_title">Sửa nhanh — Bảo hành rõ ràng — Uy tín hàng đầu</h2>
+        <p class="brand-tagline-sub" data-i18n="brand.tagline_sub">
+          Đội ngũ kỹ thuật viên giàu kinh nghiệm. Chẩn đoán miễn phí, báo giá minh bạch trước khi sửa.
+        </p>
       </div>
 
       <!-- Policy/info link cards -->
@@ -1776,44 +1802,12 @@
         </div>
       </form>
 
-      <div class="divider"><span data-i18n="login.divider">Hoặc tiếp tục với</span></div>
-
-      <div class="social-grid">
-        <button class="social-btn" type="button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          <span>Google</span>
-        </button>
-        <button class="social-btn" type="button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#1877F2">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-          </svg>
-          <span>Facebook</span>
-        </button>
-        <button class="social-btn" type="button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#0A66C2">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.063 2.063 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-          </svg>
-          <span>LinkedIn</span>
-        </button>
-        <button class="social-btn" type="button">
-          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="#181717">
-            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-          </svg>
-          <span>GitHub</span>
-        </button>
-      </div>
-
       <div class="login-foot">
         <span data-i18n="login.no_account">Chưa có tài khoản?</span> <a href="#" onclick="event.preventDefault(); openRegister();" data-i18n="btn.signup">Đăng Ký</a>
       </div>
 
       <div class="login-hint" data-i18n="login.hint">
-        💡 Demo · KTV: <strong>admin</strong>/<strong>admin</strong> · Khách hàng: <strong>khach</strong>/<strong>khach</strong>
+        💡 Demo · KTV: <strong>admin</strong> / <strong>admin</strong> · Khách: <strong>khach</strong> / <strong>Khach123</strong>
       </div>
     </div>
   </div>
@@ -1964,28 +1958,38 @@
     <div class="reg-success" id="regSuccess"></div>
     <form onsubmit="event.preventDefault(); registerCustomer();">
       <div class="form-group">
-        <label for="regPhone" data-i18n="register.phone">Số điện thoại *</label>
-        <input type="tel" id="regPhone" pattern="[0-9]{9,11}" required autocomplete="tel" placeholder="0901234567" />
-      </div>
-      <div class="form-group">
-        <label for="regName" data-i18n="register.name">Họ và tên *</label>
+        <label for="regName">Họ và tên <span style="color:#dc2626;">*</span></label>
         <input type="text" id="regName" required autocomplete="name" placeholder="Nguyễn Văn A" />
       </div>
       <div class="form-group">
-        <label for="regPassword" data-i18n="register.password">Mật khẩu (tối thiểu 6 ký tự) *</label>
-        <input type="password" id="regPassword" minlength="6" required autocomplete="new-password" />
+        <label for="regPhone">Số điện thoại <span style="color:#dc2626;">*</span></label>
+        <input type="tel" id="regPhone" pattern="[0-9]{9,11}" required autocomplete="tel" placeholder="0901234567" />
       </div>
       <div class="form-group">
-        <label for="regEmail" data-i18n="register.email">Email (không bắt buộc)</label>
+        <label for="regUsername">Tên đăng nhập <span style="color:#dc2626;">*</span></label>
+        <input type="text" id="regUsername" required autocomplete="username" placeholder="vd: nguyenvana" pattern="[a-z0-9]{3,30}" />
+        <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu/khoảng trắng/ký tự đặc biệt</small>
+      </div>
+      <div class="form-group">
+        <label for="regPassword">Mật khẩu <span style="color:#dc2626;">*</span></label>
+        <input type="password" id="regPassword" minlength="8" required autocomplete="new-password" />
+        <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Tối thiểu 8 ký tự, gồm chữ HOA, chữ thường và số (vd: Khach123)</small>
+      </div>
+      <div class="form-group">
+        <label for="regPasswordConfirm">Xác nhận mật khẩu <span style="color:#dc2626;">*</span></label>
+        <input type="password" id="regPasswordConfirm" minlength="8" required autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label for="regEmail">Email <span style="color:#94a3b8; font-weight:400;">(không bắt buộc)</span></label>
         <input type="email" id="regEmail" autocomplete="email" placeholder="email@example.com" />
       </div>
       <div class="form-group">
-        <label for="regAddress" data-i18n="register.address">Địa chỉ (không bắt buộc)</label>
+        <label for="regAddress">Địa chỉ <span style="color:#94a3b8; font-weight:400;">(không bắt buộc)</span></label>
         <input type="text" id="regAddress" autocomplete="street-address" placeholder="123 Lê Lợi, Quận 1, HCM" />
       </div>
       <div class="reg-actions">
-        <button type="button" class="reg-cancel" onclick="closeRegister()" data-i18n="register.cancel">Hủy</button>
-        <button type="submit" class="reg-submit" id="regSubmitBtn" data-i18n="register.submit">Tạo tài khoản</button>
+        <button type="button" class="reg-cancel" onclick="closeRegister()">Hủy</button>
+        <button type="submit" class="reg-submit" id="regSubmitBtn">Tạo tài khoản</button>
       </div>
     </form>
   </div>
@@ -2090,15 +2094,13 @@
   }
 
   /**
-   * Login via backend API (POST /api/auth/login or /api/auth/login/customer).
-   *
-   * UX convention preserved from demo:
-   *   - "admin" / staff usernames → admin login route
-   *   - "khach" → mapped to demo customer phone 0900000001 for backwards-compat
-   *   - 10-digit phone → customer login route
+   * Unified login — backend /auth/login tự nhận diện:
+   *   - Trùng username trong bảng `users` → staff/KTV
+   *   - Trùng username trong bảng `customers` → khách hàng
+   * Trả về { token, user } hoặc { token, customer }.
    */
   async function login() {
-    const userInput = document.getElementById('loginUser').value.trim();
+    const userInput = document.getElementById('loginUser').value.trim().toLowerCase();
     const password = document.getElementById('loginPass').value;
     const errorEl = document.getElementById('loginError');
     errorEl.textContent = '';
@@ -2108,40 +2110,34 @@
       return;
     }
 
-    /* Demo shortcut: "khach" → use demo phone */
-    const isCustomerPhone = /^\d{9,11}$/.test(userInput) || userInput.toLowerCase() === 'khach';
-    const phone = userInput.toLowerCase() === 'khach' ? '0900000001' : userInput;
-
     try {
-      if (isCustomerPhone) {
-        const { token, customer } = await api('/auth/login/customer', {
-          method: 'POST',
-          body: { phone, password },
-        });
-        apiToken.set(token);
+      const res = await api('/auth/login', {
+        method: 'POST',
+        body: { username: userInput, password },
+      });
+      apiToken.set(res.token);
+
+      /* Customer login → redirect homepage */
+      if (res.customer) {
         sessionStorage.setItem(ROLE_KEY, 'customer');
         sessionStorage.setItem(ME_KEY, JSON.stringify({
-          id: customer.id,
-          name: customer.full_name,
-          phone: customer.phone,
-          email: customer.email,
-          address: customer.address,
-          avatar: customer.avatar_url || '',
+          id: res.customer.id,
+          name: res.customer.full_name,
+          phone: res.customer.phone,
+          username: res.customer.username,
+          email: res.customer.email,
+          address: res.customer.address,
+          avatar: res.customer.avatar_url || '',
         }));
         seedDemoCustomerThread();
         window.location.href = 'index.html';
         return;
       }
 
-      const { token, user } = await api('/auth/login', {
-        method: 'POST',
-        body: { username: userInput, password },
-      });
-      apiToken.set(token);
+      /* Staff/KTV login → redirect dashboard */
       sessionStorage.setItem(ADMIN_KEY, '1');
-      /* Lưu role thật từ backend (admin/manager/reception/technician) — dashboard dựa vào đây để ẩn pane */
-      sessionStorage.setItem(ROLE_KEY, user.role || 'admin');
-      sessionStorage.setItem('ffc_user', JSON.stringify(user));
+      sessionStorage.setItem(ROLE_KEY, res.user.role || 'admin');
+      sessionStorage.setItem('ffc_user', JSON.stringify(res.user));
       window.location.href = 'dashboard.html';
     } catch (err) {
       console.error('[Login error]', err);
@@ -2185,29 +2181,42 @@
     document.getElementById('regModal').classList.remove('open');
   }
   async function registerCustomer() {
-    const phone    = document.getElementById('regPhone').value.trim();
     const fullName = document.getElementById('regName').value.trim();
+    const phone    = document.getElementById('regPhone').value.trim().replace(/\s/g, '');
+    const username = document.getElementById('regUsername').value.trim().toLowerCase();
     const password = document.getElementById('regPassword').value;
+    const passConf = document.getElementById('regPasswordConfirm').value;
     const email    = document.getElementById('regEmail').value.trim();
     const address  = document.getElementById('regAddress').value.trim();
     const errorEl  = document.getElementById('regError');
     const okEl     = document.getElementById('regSuccess');
     const btn      = document.getElementById('regSubmitBtn');
+
+    const showError = (msg) => {
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+      okEl.classList.remove('show');
+    };
     errorEl.classList.remove('show');
     okEl.classList.remove('show');
 
-    if (!/^\d{9,11}$/.test(phone)) {
-      errorEl.textContent = 'Số điện thoại không hợp lệ (9-11 chữ số)';
-      errorEl.classList.add('show');
-      return;
+    /* Client-side validation */
+    if (!fullName) return showError('Vui lòng nhập họ và tên');
+    if (!/^\d{9,11}$/.test(phone)) return showError('Số điện thoại không hợp lệ (9-11 chữ số)');
+    if (!/^[a-z0-9]{3,30}$/.test(username)) {
+      return showError('Tên đăng nhập: 3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu/ký tự đặc biệt');
     }
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+      return showError('Mật khẩu tối thiểu 8 ký tự, gồm chữ HOA, chữ thường và số');
+    }
+    if (password !== passConf) return showError('Mật khẩu xác nhận không khớp');
 
     btn.disabled = true;
     btn.textContent = '...';
     try {
       const { token, customer } = await api('/auth/register', {
         method: 'POST',
-        body: { phone, full_name: fullName, password, email: email || undefined, address: address || undefined },
+        body: { phone, username, full_name: fullName, password, email: email || undefined, address: address || undefined },
       });
       apiToken.set(token);
       sessionStorage.setItem(ROLE_KEY, 'customer');
@@ -2215,18 +2224,18 @@
         id: customer.id,
         name: customer.full_name,
         phone: customer.phone,
+        username: customer.username,
         email: customer.email,
         address: customer.address,
         avatar: '',
       }));
-      okEl.textContent = PA_i18n.tr('register.success') || 'Đăng ký thành công! Đang đăng nhập…';
+      okEl.textContent = 'Đăng ký thành công! Đang đăng nhập…';
       okEl.classList.add('show');
       setTimeout(() => { window.location.href = 'index.html'; }, 900);
     } catch (err) {
-      errorEl.textContent = err.message || 'Đăng ký thất bại';
-      errorEl.classList.add('show');
+      showError(err.message || 'Đăng ký thất bại');
       btn.disabled = false;
-      btn.textContent = PA_i18n.tr('register.submit') || 'Tạo tài khoản';
+      btn.textContent = 'Tạo tài khoản';
     }
   }
 
