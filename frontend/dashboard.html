@@ -21,6 +21,7 @@
 <script src="assets/js/i18n.js?v=4"></script>
 <script src="assets/js/config.js?v=1"></script>
 <script src="assets/js/api.js?v=1"></script>
+<script src="assets/js/date-bounds.js?v=1"></script>
 <script src="assets/js/notifications.js?v=1" defer></script>
 <style>
   :root {
@@ -1562,33 +1563,33 @@
         <div class="kpi">
           <div class="ic blue"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
           <div>
-            <div class="val">14</div>
-            <div class="lbl" data-i18n="dash.kpi.today">Phiếu hôm nay</div>
-            <div class="delta" data-i18n="dash.kpi.today.delta">↑ 3 so với hôm qua</div>
+            <div class="val" id="kpi-today">0</div>
+            <div class="lbl" id="kpi-today-lbl" data-i18n="dash.kpi.today">Phiếu hôm nay</div>
+            <div class="delta" id="kpi-today-delta">—</div>
           </div>
         </div>
         <div class="kpi">
           <div class="ic amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <div>
-            <div class="val">8</div>
+            <div class="val" id="kpi-inprog">0</div>
             <div class="lbl" data-i18n="dash.kpi.inprog">Đang xử lý</div>
-            <div class="delta down" data-i18n="dash.kpi.inprog.delta">↓ 2 từ sáng</div>
+            <div class="delta" id="kpi-inprog-delta">—</div>
           </div>
         </div>
         <div class="kpi">
           <div class="ic green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
           <div>
-            <div class="val">6</div>
-            <div class="lbl" data-i18n="dash.kpi.done">Đã hoàn thành</div>
-            <div class="delta" data-i18n="dash.kpi.done.delta">↑ 4 hôm nay</div>
+            <div class="val" id="kpi-done">0</div>
+            <div class="lbl" id="kpi-done-lbl" data-i18n="dash.kpi.done">Đã hoàn thành</div>
+            <div class="delta" id="kpi-done-delta">—</div>
           </div>
         </div>
-        <div class="kpi">
+        <div class="kpi" data-tech-hide>
           <div class="ic purple"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
           <div>
-            <div class="val" style="font-size:20px; white-space:nowrap;">12.400.000 ₫</div>
+            <div class="val" id="kpi-revenue" style="font-size:20px; white-space:nowrap;">0 ₫</div>
             <div class="lbl" data-i18n="dash.kpi.revenue">Doanh thu hôm nay</div>
-            <div class="delta" data-i18n="dash.kpi.revenue.delta">↑ 18% tuần này</div>
+            <div class="delta" id="kpi-revenue-delta">—</div>
           </div>
         </div>
       </div>
@@ -1612,7 +1613,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card" data-tech-hide>
           <h3><span data-i18n="dash.activity.title">Hoạt động hôm nay</span></h3>
           <div style="display:grid; gap: 14px;">
             <div style="display:flex; gap:12px;">
@@ -1648,7 +1649,7 @@
       </div>
 
       <!-- Khối lượng việc của KTV -->
-      <div class="card" style="margin-top: 18px;">
+      <div class="card" data-tech-hide style="margin-top: 18px;">
         <h3>
           <span data-i18n="dash.workload.title">Khối lượng việc của KTV</span>
           <span class="small" data-i18n="dash.workload.sub">Phiếu đang xử lý (chờ / đang sửa / test)</span>
@@ -1728,7 +1729,7 @@
           </div>
           <div class="field">
             <label data-i18n="dash.intake.dueDate">Ngày dự kiến trả máy</label>
-            <input type="date" name="dueDate" />
+            <input type="date" name="dueDate" data-date-bound="future" />
           </div>
 
           <!-- Assign -->
@@ -2096,12 +2097,20 @@
         </div>
         <div class="item full"><div class="k" data-i18n="dash.intake.issue">Mô tả lỗi</div><div class="v" id="tm-issue">—</div></div>
         <div class="item"><div class="k" data-i18n="dash.tickets.col.intake">Tiếp nhận</div><div class="v" id="tm-date">—</div></div>
-        <div class="item"><div class="k" data-i18n="dash.tickets.col.quote">Báo giá</div><div class="v" id="tm-quote">—</div></div>
+        <div class="item">
+          <div class="k" data-i18n="dash.tickets.col.quote">Báo giá</div>
+          <div class="v">
+            <input type="number" id="tm-quote-input" min="0" step="1000" placeholder="Nhập số (VNĐ)"
+                   onblur="saveTicketQuote(this.value)"
+                   style="width:100%; padding:6px 8px; border:1px solid var(--border); border-radius:8px; background:#fff; font-size:14px;" />
+            <small style="color:var(--text-3); font-size:11.5px;" id="tm-quote-display">—</small>
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('ticketModal')" data-i18n="dash.modal.close">Đóng</button>
-      <button class="btn btn-ghost" onclick="alert('In QR — đang phát triển')" data-i18n="dash.modal.print">In QR</button>
+      <button class="btn btn-ghost" onclick="openPayment(currentTicketCode); closeModal('ticketModal');">💰 Thanh toán + In HĐ</button>
       <button class="btn btn-primary" id="tm-advance" data-i18n="dash.modal.advance">Chuyển trạng thái →</button>
     </div>
   </div>
@@ -2188,7 +2197,7 @@
           </div>
           <div>
             <label style="font-size:12px; color:var(--text-2); font-weight:600;">Ngày vào làm</label>
-            <input name="hire_date" type="date" class="input" style="margin-top:6px;" />
+            <input name="hire_date" type="date" class="input" data-date-bound="past" style="margin-top:6px;" />
           </div>
         </div>
       </form>
@@ -2314,7 +2323,7 @@
           <label data-i18n="dash.payment.modal.discount">Giảm giá (%)</label>
           <input type="number" id="pm-discount" min="0" max="100" value="0" />
         </div>
-        <div class="pay-field">
+        <div class="pay-field" id="pm-receivedField">
           <label data-i18n="dash.payment.modal.received">Khách đưa (₫)</label>
           <input type="text" id="pm-received" placeholder="0" />
         </div>
@@ -2333,6 +2342,28 @@
         <div class="pay-sum-row total"><span class="k" data-i18n="dash.payment.invoice.total">Tổng thu</span><span class="v" id="pm-total">0₫</span></div>
         <div class="pay-sum-row" id="pm-changeRow" style="display:none;"><span class="k" data-i18n="dash.payment.modal.change">Tiền thối</span><span class="v" id="pm-change" style="color:#15803d; font-weight:700;">0₫</span></div>
       </div>
+
+      <!-- ===== QR Chuyển khoản (chỉ hiện khi method = bank) ===== -->
+      <div id="pm-qrBlock" style="display:none; margin-top:16px; padding:16px; background:#f0f9ff; border:1.5px dashed #0ea5e9; border-radius:12px; text-align:center;">
+        <div style="font-weight:700; color:#0369a1; margin-bottom:10px; font-size:14px;">📱 Quét QR để chuyển khoản</div>
+        <img id="pm-qrImg" src="" alt="QR Chuyển khoản" style="width:240px; height:240px; background:#fff; border-radius:8px; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        <div style="margin-top:12px; font-size:13px; color:#334155; line-height:1.7; text-align:left; max-width:340px; margin-left:auto; margin-right:auto;">
+          <div><strong>Tài khoản ngân hàng:</strong> Vietcombank - <span style="font-family:monospace; color:#0369a1;">1027894501</span> - FFCENTER JSC</div>
+          <div><strong>Thông tin thanh toán:</strong> <span id="pm-qrContent" style="font-family:monospace; color:#dc2626; font-weight:700;">—</span></div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+          <button type="button" onclick="updateQRBlock(true)" style="padding:8px 14px; background:#fff; color:#0369a1; border:1.5px solid #0ea5e9; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">
+            🔄 Tải lại QR
+          </button>
+          <button type="button" onclick="printQR()" style="padding:8px 14px; background:#0ea5e9; color:#fff; border:none; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px;">
+            🖨️ In QR
+          </button>
+        </div>
+        <div id="pm-qrWarn" style="display:none; margin-top:8px; padding:6px 10px; background:#fef3c7; color:#92400e; border-radius:6px; font-size:12px; font-weight:600;">
+          ⚠️ Số tiền đã thay đổi — bấm <b>Tải lại QR</b> để cập nhật
+        </div>
+        <div style="margin-top:8px; font-size:11.5px; color:#94a3b8;">QR đã encode sẵn số tiền — đổi % giảm giá thì phải bấm <b>Tải lại</b></div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="closeModal('paymentModal')" data-i18n="dash.payment.modal.cancel">Hủy</button>
@@ -2340,6 +2371,65 @@
     </div>
   </div>
 </div>
+
+<!-- ============ CARD INPUT MODAL (giả lập nhập thẻ cho demo) ============ -->
+<div class="modal-backdrop" id="posModal" style="z-index:300;" onclick="if (event.target === this) closeModal('posModal')">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:480px;">
+    <div class="modal-head">
+      <svg viewBox="0 0 24 24" style="width:20px; height:20px; stroke:var(--blue); fill:none; stroke-width:2;"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span style="font-size:15px; font-weight:700;">Thanh toán bằng thẻ</span>
+      <div class="grow"></div>
+      <span id="card-amount" style="font-weight:800; color:#dc2626; font-size:16px;">0₫</span>
+      <button class="close" onclick="closeModal('posModal')" aria-label="Đóng" style="margin-left:8px;">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:14px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <span style="font-size:13px; font-weight:700; color:#0f172a;">Thẻ tín dụng / ghi nợ</span>
+          <div style="display:flex; gap:6px;">
+            <span id="brand-visa" class="brand-pill">VISA</span>
+            <span id="brand-mc" class="brand-pill">MC</span>
+            <span id="brand-jcb" class="brand-pill">JCB</span>
+            <span id="brand-amex" class="brand-pill">AMEX</span>
+          </div>
+        </div>
+        <label style="font-size:12px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Số thẻ</label>
+        <input type="text" id="card-number" inputmode="numeric" autocomplete="off" maxlength="23" placeholder="1234 5678 9012 3456"
+               style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Courier New',monospace; font-size:16px; letter-spacing:1px; margin-bottom:12px; background:#fff;" />
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Hết hạn (MM/YY)</label>
+            <input type="text" id="card-exp" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="MM/YY"
+                   style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Courier New',monospace; font-size:15px; background:#fff;" />
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">CVV/CVC</label>
+            <input type="text" id="card-cvv" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="123"
+                   style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-family:'Courier New',monospace; font-size:15px; background:#fff;" />
+          </div>
+        </div>
+        <label style="font-size:12px; font-weight:600; color:#475569; display:block; margin-bottom:4px;">Tên chủ thẻ</label>
+        <input type="text" id="card-name" autocomplete="off" placeholder="NGUYEN VAN A"
+               style="width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; text-transform:uppercase; font-size:14px; background:#fff;" />
+      </div>
+      <div id="card-status" style="min-height:22px; font-size:13.5px; text-align:center;"></div>
+      <div style="font-size:11.5px; color:#94a3b8; text-align:center; margin-top:8px;">
+        🔒 Thông tin thẻ được mã hoá. Demo: thử <b>4242 4242 4242 4242</b> / <b>12/29</b> / <b>123</b>
+      </div>
+    </div>
+    <div class="modal-foot" id="card-actions" style="display:flex;">
+      <button class="btn btn-ghost" onclick="closeModal('posModal')">Huỷ</button>
+      <button class="btn btn-primary" onclick="submitCardPayment()" style="background:#15803d;">💳 Thanh toán</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .brand-pill { font-size:9px; font-weight:800; padding:3px 6px; border-radius:4px; background:#e2e8f0; color:#94a3b8; letter-spacing:1px; transition:all .2s; }
+  .brand-pill.active { background:#1e40af; color:#fff; transform:scale(1.05); }
+</style>
 
 <!-- ============ TOAST ============ -->
 <div class="toast" id="toast" role="status" aria-live="polite">
@@ -2380,7 +2470,13 @@
       paidAt:      t.paid_at,
       invoiceNo:   t.paid_invoice_no,
       finalAmount: t.paid_final_amount,
+      paidDiscount: +t.paid_discount_pct || 0,
+      paidNote:    t.paid_note || '',
       lastStatusAt: t.last_status_at,
+      accountType: t.customer_account_type || 'individual',
+      bizTaxCode:  t.biz_tax_code || null,
+      bizCompanyName: t.biz_company_name || null,
+      bizCompanyAddress: t.biz_company_address || null,
     };
   }
 
@@ -2976,7 +3072,8 @@
     }
     document.getElementById('tm-issue').textContent = t.issue;
     document.getElementById('tm-date').textContent = t.date;
-    document.getElementById('tm-quote').textContent = fmtMoney(t.quote);
+    document.getElementById('tm-quote-input').value = t.quote || '';
+    document.getElementById('tm-quote-display').textContent = t.quote ? fmtMoney(t.quote) : '—';
 
     /* Build clickable timeline */
     const currentIdx = STATUS_FLOW.indexOf(t.status);
@@ -3006,6 +3103,24 @@
     }
 
     openModal('ticketModal');
+  }
+
+  /* ─── Save báo giá (gọi khi blur input) ─── */
+  async function saveTicketQuote(value) {
+    const t = TICKETS.find(x => x.code === currentTicketCode);
+    if (!t || t.source === 'booking') return;
+    const newQuote = parseInt(value || 0, 10);
+    if (newQuote === t.quote) return;
+    try {
+      await api('/tickets/' + encodeURIComponent(currentTicketCode), {
+        method: 'PATCH', body: { quote: newQuote },
+      });
+      t.quote = newQuote;
+      document.getElementById('tm-quote-display').textContent = fmtMoney(newQuote);
+      renderTickets();
+    } catch (err) {
+      alert('Lỗi lưu báo giá: ' + (err.message || ''));
+    }
   }
 
   async function setStatus(newStatus) {
@@ -3303,6 +3418,7 @@
     if (opt) {
       document.querySelectorAll('#pm-methods .pay-method-opt').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
+      updateQRBlock();
     }
   });
   document.addEventListener('input', (e) => {
@@ -3333,7 +3449,84 @@
     document.getElementById('pm-note').value = '';
     document.querySelectorAll('#pm-methods .pay-method-opt').forEach(o => o.classList.toggle('selected', o.dataset.method === 'cash'));
     refreshPaymentTotals();
+    updateQRBlock();
     openModal('paymentModal');
+  }
+
+  /* ─── Hiển thị theo phương thức + QR chuyển khoản (VietQR) ─── */
+  /* forceReload = true → gọi lại VietQR với amount mới (bấm "Tải lại QR" sau khi đổi giảm giá) */
+  let _qrReloadCount = 0;
+  function updateQRBlock(forceReload) {
+    const method = document.querySelector('#pm-methods .pay-method-opt.selected')?.dataset.method;
+    const block = document.getElementById('pm-qrBlock');
+    const receivedField = document.getElementById('pm-receivedField');
+    const changeRow = document.getElementById('pm-changeRow');
+    /* Ô "Khách đưa" + dòng "Tiền thối" chỉ có nghĩa với tiền mặt */
+    if (receivedField) receivedField.style.display = (method === 'cash') ? '' : 'none';
+    if (method !== 'cash' && changeRow) changeRow.style.display = 'none';
+    if (!block) return;
+    if (method !== 'bank') { block.style.display = 'none'; return; }
+    const t = TICKETS.find(x => x.code === currentPaymentCode);
+    if (!t) return;
+    const total = parseInt((document.getElementById('pm-total').textContent || '0').replace(/[^0-9]/g, ''), 10) || 0;
+    block.style.display = 'block';
+    const img = document.getElementById('pm-qrImg');
+    const warn = document.getElementById('pm-qrWarn');
+    /* Lần đầu mở (chưa có src) → load tự động. Sau đó chỉ load khi forceReload=true */
+    const isFirstLoad = !img.src || img.src.endsWith('/') || img.src.endsWith('#') ||
+                        (img.dataset.code && img.dataset.code !== t.code) || !img.dataset.code;
+    if (!forceReload && !isFirstLoad) {
+      if (warn) warn.style.display = (img.dataset.amount !== String(total)) ? 'block' : 'none';
+      return;
+    }
+    /* Mã thanh toán: FFCENTER + 6 số random, cache trên ticket để reload không đổi */
+    if (!t._payCode) {
+      t._payCode = 'FFCENTER' + Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    }
+    /* Force browser re-render: clear src → set src mới với cache-bust ngẫu nhiên */
+    _qrReloadCount++;
+    const bust = `${Date.now()}${_qrReloadCount}${Math.floor(Math.random() * 9999)}`;
+    const qrUrl = `https://img.vietqr.io/image/970436-1027894501-compact2.png?amount=${total}&addInfo=${encodeURIComponent(t._payCode)}&accountName=FFCENTER+JSC&_=${bust}`;
+    img.removeAttribute('src');
+    setTimeout(() => { img.src = qrUrl; }, 30);
+    img.dataset.amount = String(total);
+    img.dataset.code = t.code;
+    document.getElementById('pm-qrContent').textContent = t._payCode;
+    if (warn) warn.style.display = 'none';
+    console.log('[QR] reload #' + _qrReloadCount + ' amount=' + total + ' code=' + t._payCode);
+  }
+
+  function printQR() {
+    const t = TICKETS.find(x => x.code === currentPaymentCode);
+    if (!t) return;
+    const qrSrc = document.getElementById('pm-qrImg').src;
+    const total = document.getElementById('pm-total').textContent;
+    const w = window.open('', '_blank', 'width=500,height=700');
+    w.document.write(`
+      <html><head><meta charset="utf-8"><title>QR ${t.code}</title>
+      <style>
+        body{font-family:'Inter',Arial,sans-serif;padding:30px;text-align:center;color:#1e293b;}
+        h1{color:#0369a1;margin:0 0 8px;font-size:22px;}
+        .sub{color:#64748b;font-size:13px;margin-bottom:16px;}
+        img{width:300px;height:300px;border:1px solid #e2e8f0;padding:8px;border-radius:8px;}
+        .info{margin-top:16px;font-size:14px;line-height:1.7;}
+        .info b{color:#0369a1;}
+        .total{font-size:24px;font-weight:800;color:#dc2626;margin:12px 0;}
+        @media print{body{padding:0;}}
+      </style></head><body>
+        <h1>FFCENTER — QUÉT ĐỂ CHUYỂN KHOẢN</h1>
+        <div class="sub">Phiếu: ${t.code}</div>
+        <img src="${qrSrc}" />
+        <div class="info" style="text-align:left;max-width:340px;margin:16px auto 0;">
+          <div><b>Tài khoản ngân hàng:</b> Vietcombank - 1027894501 - FFCENTER JSC</div>
+          <div><b>Thông tin thanh toán:</b> ${t._payCode || ''}</div>
+          <div class="total" style="text-align:center;">${total}</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:14px;text-align:center;">Quét QR bằng app ngân hàng • In ${new Date().toLocaleString('vi-VN')}</div>
+        </div>
+        <script>window.onload=()=>{setTimeout(()=>window.print(),300);}<\/script>
+      </body></html>
+    `);
+    w.document.close();
   }
 
   function refreshPaymentTotals() {
@@ -3353,12 +3546,20 @@
     } else {
       changeRow.style.display = 'none';
     }
+    /* Refresh QR khi giá đổi */
+    if (typeof updateQRBlock === 'function') updateQRBlock();
   }
 
   async function confirmPayment() {
+    const method = document.querySelector('#pm-methods .pay-method-opt.selected')?.dataset.method || 'cash';
+    /* Thẻ → mở form nhập thẻ, ghi nhận khi xử lý thành công */
+    if (method === 'card') { openPOSModal(); return; }
+    await finalizePayment(method);
+  }
+
+  async function finalizePayment(method) {
     const t = TICKETS.find(x => x.code === currentPaymentCode);
     if (!t) return;
-    const method = document.querySelector('#pm-methods .pay-method-opt.selected')?.dataset.method || 'cash';
     const discount_pct = Math.max(0, Math.min(100, +document.getElementById('pm-discount').value || 0));
     const received = parseInt((document.getElementById('pm-received').value || '').replace(/[^0-9]/g, ''), 10) || null;
     const note = document.getElementById('pm-note').value.trim();
@@ -3384,6 +3585,94 @@
     }
   }
 
+  /* ─── Card payment modal (giả lập nhập thẻ) ─── */
+  function openPOSModal() {
+    document.getElementById('card-amount').textContent = document.getElementById('pm-total').textContent;
+    document.getElementById('card-number').value = '';
+    document.getElementById('card-exp').value = '';
+    document.getElementById('card-cvv').value = '';
+    document.getElementById('card-name').value = '';
+    document.getElementById('card-status').innerHTML = '';
+    document.getElementById('card-actions').style.display = 'flex';
+    detectCardBrand('');
+    openModal('posModal');
+    setTimeout(() => document.getElementById('card-number').focus(), 100);
+  }
+
+  /* Auto-format card number: 4 số / nhóm */
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'card-number') {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 19);
+      e.target.value = v.replace(/(\d{4})(?=\d)/g, '$1 ');
+      detectCardBrand(v);
+    } else if (e.target.id === 'card-exp') {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+      e.target.value = v;
+    } else if (e.target.id === 'card-cvv') {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    }
+  });
+
+  function detectCardBrand(num) {
+    let brand = '';
+    if (/^4/.test(num)) brand = 'visa';
+    else if (/^(5[1-5]|2[2-7])/.test(num)) brand = 'mc';
+    else if (/^35/.test(num)) brand = 'jcb';
+    else if (/^3[47]/.test(num)) brand = 'amex';
+    ['visa', 'mc', 'jcb', 'amex'].forEach(b => {
+      const el = document.getElementById('brand-' + b);
+      if (el) el.classList.toggle('active', brand === b);
+    });
+    return brand;
+  }
+
+  async function submitCardPayment() {
+    const num = document.getElementById('card-number').value.replace(/\s/g, '');
+    const exp = document.getElementById('card-exp').value;
+    const cvv = document.getElementById('card-cvv').value;
+    const name = document.getElementById('card-name').value.trim();
+    const status = document.getElementById('card-status');
+
+    /* Validate cơ bản */
+    if (num.length < 13 || num.length > 19) {
+      status.innerHTML = '<div style="color:#dc2626;">❌ Số thẻ phải 13–19 số</div>'; return;
+    }
+    if (!/^\d{2}\/\d{2}$/.test(exp)) {
+      status.innerHTML = '<div style="color:#dc2626;">❌ Hết hạn phải dạng MM/YY</div>'; return;
+    }
+    const [mm, yy] = exp.split('/').map(Number);
+    if (mm < 1 || mm > 12) { status.innerHTML = '<div style="color:#dc2626;">❌ Tháng không hợp lệ</div>'; return; }
+    /* So với năm hiện tại (2 số cuối) */
+    const curYY = new Date().getFullYear() % 100;
+    const curMM = new Date().getMonth() + 1;
+    if (yy < curYY || (yy === curYY && mm < curMM)) {
+      status.innerHTML = '<div style="color:#dc2626;">❌ Thẻ đã hết hạn</div>'; return;
+    }
+    if (cvv.length < 3) { status.innerHTML = '<div style="color:#dc2626;">❌ CVV phải 3–4 số</div>'; return; }
+    if (!name) { status.innerHTML = '<div style="color:#dc2626;">❌ Nhập tên chủ thẻ</div>'; return; }
+
+    const brand = detectCardBrand(num) || 'card';
+    const brandLabel = { visa: 'Visa', mc: 'Mastercard', jcb: 'JCB', amex: 'Amex', card: 'Thẻ' }[brand];
+    const last4 = num.slice(-4);
+
+    /* Giả lập gateway xử lý */
+    document.getElementById('card-actions').style.display = 'none';
+    status.innerHTML = '<div style="color:#0369a1;">📡 Đang xử lý giao dịch...</div>';
+    await new Promise(r => setTimeout(r, 1500));
+    status.innerHTML = '<div style="color:#15803d; font-weight:700;">✅ Thanh toán thành công</div>';
+    await new Promise(r => setTimeout(r, 500));
+
+    /* Lưu meta vào Map (sống qua refreshTickets) — key = ticket code */
+    _cardMetaMap[currentPaymentCode] = { brand: brandLabel, last4 };
+
+    closeModal('posModal');
+    await finalizePayment('card');
+  }
+
+  /* Map { ticketCode → { brand, last4 } } — chỉ tồn tại trong session, đủ cho demo */
+  const _cardMetaMap = {};
+
   function viewInvoice(code) {
     const t = TICKETS.find(x => x.code === code);
     if (!t || !t.paid) return;
@@ -3399,8 +3688,13 @@
 
   function buildInvoiceHTML(t) {
     const subtotal = t.quote;
-    const discount = t.discountAmt || 0;
-    const total = t.finalAmount || t.quote;
+    const discount = (t.paidDiscount > 0)
+      ? Math.round(subtotal * t.paidDiscount / 100)
+      : (t.discountAmt || 0);
+    const total = t.finalAmount || (subtotal - discount);
+    const isBiz = t.accountType === 'business' && t.bizTaxCode;
+    const isSv  = t.accountType === 'student';
+    const discountPct = t.paidDiscount || t.discount || 0;
     return `<!doctype html>
 <html lang="vi"><head><meta charset="utf-8"><title>Hoá đơn ${t.invoiceNo}</title>
 <style>
@@ -3432,10 +3726,21 @@ h2{font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:1.5p
 <div class="row"><span class="k">Số HĐ</span><span class="v">${t.invoiceNo}</span></div>
 <div class="row"><span class="k">Mã phiếu</span><span class="v">${t.code}</span></div>
 <div class="row"><span class="k">Ngày</span><span class="v">${t.paidAt}</span></div>
-<div class="row"><span class="k">Hình thức</span><span class="v">${payMethodLabel(t.paidMethod)}</span></div>
+<div class="row"><span class="k">Hình thức</span><span class="v">${
+  t.paidMethod === 'card' && _cardMetaMap[t.code]
+    ? `Thẻ ${_cardMetaMap[t.code].brand} ••••${_cardMetaMap[t.code].last4}`
+    : payMethodLabel(t.paidMethod)
+}</span></div>
 <div class="items">
-  <div style="font-size:13px;font-weight:700;margin-bottom:6px">Khách hàng</div>
-  <div class="row"><span class="k">Tên</span><span class="v">${t.customer}</span></div>
+  <div style="font-size:13px;font-weight:700;margin-bottom:6px">${isBiz ? 'Khách hàng (Doanh nghiệp)' : 'Khách hàng'} ${isSv ? '<span style="background:#e0f2fe;color:#0369a1;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px">🎓 SV</span>' : ''}${isBiz ? '<span style="background:#fef3c7;color:#92400e;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:4px">🏢 DN</span>' : ''}</div>
+  ${isBiz ? `
+    <div class="row"><span class="k">Tên công ty</span><span class="v">${t.bizCompanyName || t.customer}</span></div>
+    <div class="row"><span class="k">Mã số thuế</span><span class="v" style="font-family:monospace">${t.bizTaxCode}</span></div>
+    ${t.bizCompanyAddress ? `<div class="row"><span class="k">Địa chỉ</span><span class="v" style="font-size:12px">${t.bizCompanyAddress}</span></div>` : ''}
+    <div class="row"><span class="k">Người liên hệ</span><span class="v">${t.customer}</span></div>
+  ` : `
+    <div class="row"><span class="k">Tên</span><span class="v">${t.customer}</span></div>
+  `}
   <div class="row"><span class="k">SĐT</span><span class="v">${t.phone}</span></div>
   <div style="font-size:13px;font-weight:700;margin:10px 0 6px">Dịch vụ</div>
   <div class="row"><span class="k">Thiết bị</span><span class="v">${t.device}</span></div>
@@ -3443,7 +3748,7 @@ h2{font-size:13px;margin:14px 0 8px;text-transform:uppercase;letter-spacing:1.5p
   <div class="row"><span class="k">KTV</span><span class="v">${t.tech}</span></div>
 </div>
 <div class="row"><span class="k">Tạm tính</span><span class="v">${fmtVND(subtotal)}</span></div>
-${discount > 0 ? `<div class="row"><span class="k">Giảm giá (${t.discount}%)</span><span class="v" style="color:#dc2626">-${fmtVND(discount)}</span></div>` : ''}
+${discount > 0 ? `<div class="row"><span class="k">Giảm giá (${discountPct}%)</span><span class="v" style="color:#dc2626">-${fmtVND(discount)}</span></div>` : ''}
 <div class="row total-row"><span class="k">TỔNG CỘNG</span><span class="v">${fmtVND(total)}</span></div>
 ${t.paidNote ? `<div style="font-size:12px;color:#64748b;margin-top:14px;padding:8px;background:#f1f5f9;border-radius:6px"><strong>Ghi chú:</strong> ${t.paidNote}</div>` : ''}
 <div class="foot">
@@ -3748,7 +4053,39 @@ ${t.paidNote ? `<div style="font-size:12px;color:#64748b;margin-top:14px;padding
   });
 
   /* Update filter counts */
+  function renderDashKPI() {
+    const isKtv = sessionStorage.getItem('ffc_role') === 'technician';
+    const today = new Date().toISOString().slice(0, 10);
+    /* "Phiếu hôm nay" — tạo trong ngày hôm nay */
+    const todayCount = TICKETS.filter(t => (t.date || '').startsWith(today)).length;
+    /* "Đang xử lý" — waiting/in-progress/testing */
+    const inProg = TICKETS.filter(t => ['waiting','in-progress','testing'].includes(t.status)).length;
+    /* "Đã hoàn thành" — done/delivered (cộng dồn, không chỉ hôm nay) */
+    const doneAll = TICKETS.filter(t => ['done','delivered'].includes(t.status)).length;
+    /* Doanh thu hôm nay — chỉ admin/cashier xem */
+    const revenue = TICKETS
+      .filter(t => t.paid && (t.paidAt || '').startsWith(today))
+      .reduce((s, t) => s + (t.finalAmount || 0), 0);
+
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setText('kpi-today',   todayCount);
+    setText('kpi-inprog',  inProg);
+    setText('kpi-done',    doneAll);
+    setText('kpi-revenue', fmtVND(revenue));
+    /* Sub-label cho KTV để rõ là "của tôi" */
+    if (isKtv) {
+      setText('kpi-today-lbl', 'Phiếu của tôi hôm nay');
+      setText('kpi-done-lbl',  'Tôi đã hoàn thành');
+    }
+    /* Delta tạm để trống — sẽ wire khi có lịch sử so sánh */
+    setText('kpi-today-delta', todayCount > 0 ? `+${todayCount} hôm nay` : '—');
+    setText('kpi-inprog-delta', inProg > 0 ? `${inProg} phiếu chờ xử lý` : 'Trống');
+    setText('kpi-done-delta', doneAll > 0 ? `${doneAll} tổng cộng` : '—');
+    setText('kpi-revenue-delta', revenue > 0 ? `${TICKETS.filter(t => t.paid && (t.paidAt || '').startsWith(today)).length} hoá đơn` : '—');
+  }
+
   function updateCounts() {
+    if (typeof renderDashKPI === 'function') renderDashKPI();
     const counts = TICKETS.reduce((m, t) => { m[t.status] = (m[t.status] || 0) + 1; return m; }, {});
     document.getElementById('cf-all').textContent = TICKETS.length;
     document.getElementById('cf-waiting').textContent = counts.waiting || 0;
@@ -3893,19 +4230,69 @@ ${t.paidNote ? `<div style="font-size:12px;color:#64748b;margin-top:14px;padding
      Admin/manager/reception thấy đầy đủ. */
   (function applyRoleUI() {
     const role = sessionStorage.getItem('ffc_role') || 'admin';
-    if (role !== 'technician') return;
-    document.querySelectorAll('[data-tech-hide]').forEach(el => el.style.display = 'none');
-    /* Cập nhật name + role hiển thị ở sidebar foot */
+    /* Sanity check: ffc_user.role phải khớp ffc_role — nếu out of sync → force re-login */
+    try {
+      const u = JSON.parse(sessionStorage.getItem('ffc_user') || 'null');
+      if (u && u.role && u.role !== role) {
+        console.warn('[role] mismatch: ffc_role=' + role + ' nhưng ffc_user.role=' + u.role + ' → force logout');
+        ['ffc_admin','ffc_role','ffc_user','ffc_customer_me'].forEach(k => sessionStorage.removeItem(k));
+        window.location.href = 'admin.html';
+        return;
+      }
+    } catch (_) {}
+    /* Sidebar foot hiển thị actual user — áp cho MỌI role, không chỉ KTV */
     try {
       const user = JSON.parse(sessionStorage.getItem('ffc_user') || '{}');
-      if (user.full_name) {
-        document.getElementById('userName').textContent = user.full_name;
-        document.getElementById('userInitials').textContent =
-          user.full_name.split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
-      }
+      const nameEl = document.getElementById('userName');
+      const initEl = document.getElementById('userInitials');
       const roleEl = document.querySelector('.sidebar-foot .role');
-      if (roleEl) { roleEl.textContent = 'Kỹ thuật viên'; roleEl.removeAttribute('data-i18n'); }
+      if (user.full_name && nameEl && initEl) {
+        nameEl.removeAttribute('data-i18n');
+        initEl.removeAttribute('data-i18n');
+        nameEl.textContent = user.full_name;
+        initEl.textContent = user.full_name.split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+      }
+      if (roleEl) {
+        const roleLabels = {
+          admin: 'Quản trị viên', manager: 'Quản lý', cashier: 'Thu ngân',
+          reception: 'Lễ tân', technician: 'Kỹ thuật viên',
+        };
+        roleEl.removeAttribute('data-i18n');
+        roleEl.textContent = roleLabels[role] || role;
+      }
     } catch (_) {}
+    /* Định nghĩa pane visible cho từng role */
+    const VISIBLE_PANES = {
+      admin:      ['dashboard','intake','tickets','customers','support','inventory','payment','staff','reports','settings'],
+      manager:    ['dashboard','intake','tickets','customers','support','inventory','payment','staff','reports','settings'],
+      cashier:    ['dashboard','tickets','customers','support','payment','settings'],
+      reception:  ['dashboard','intake','tickets','customers','support','settings'],
+      technician: ['dashboard','tickets','support','settings'],
+    };
+    const allowed = VISIBLE_PANES[role] || VISIBLE_PANES.admin;
+    /* Ẩn nav items không nằm trong allowed list */
+    document.querySelectorAll('.nav-list li a[data-pane]').forEach(a => {
+      const pane = a.dataset.pane;
+      const li = a.closest('li');
+      if (li) li.style.display = allowed.includes(pane) ? '' : 'none';
+    });
+    /* Ẩn các section heading "Quản lý" nếu không còn item nào trong nhóm đó hiện */
+    document.querySelectorAll('.nav-section-title').forEach(h => {
+      const list = h.nextElementSibling;
+      if (list && list.classList.contains('nav-list')) {
+        const anyVisible = [...list.querySelectorAll('li')].some(li => li.style.display !== 'none');
+        h.style.display = anyVisible ? '' : 'none';
+        list.style.display = anyVisible ? '' : 'none';
+      }
+    });
+    /* Nút "Tiếp nhận" trên header chỉ admin/manager/reception thấy */
+    const intakeBtn = document.querySelector('header .primary[onclick*="intake"]');
+    if (intakeBtn) intakeBtn.style.display = allowed.includes('intake') ? '' : 'none';
+    /* Nếu user đang ở pane không có quyền → đẩy về dashboard */
+    const currentHash = (location.hash || '#dashboard').replace('#', '');
+    if (!allowed.includes(currentHash)) location.hash = 'dashboard';
+    if (role !== 'technician') return;
+    document.querySelectorAll('[data-tech-hide]').forEach(el => el.style.display = 'none');
     /* Nếu user đang ở pane bị ẩn → đẩy về dashboard */
     const hash = (location.hash || '').replace('#', '');
     const hidden = ['intake', 'customers', 'inventory', 'payment', 'staff', 'reports'];

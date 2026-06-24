@@ -21,6 +21,7 @@
 <script src="assets/js/i18n.js?v=5"></script>
 <script src="assets/js/config.js?v=1"></script>
 <script src="assets/js/api.js?v=1"></script>
+<script src="assets/js/date-bounds.js?v=1"></script>
 <script src="assets/js/notifications.js?v=1" defer></script>
 <style>
   :root {
@@ -3603,9 +3604,44 @@
   }
   .bk-field textarea { resize: vertical; min-height: 60px; }
 
+  /* 2-tab selector cho hình thức tiếp nhận */
+  .bk-tab-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .bk-tab {
+    flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 14px 16px; border: 2px solid var(--border); background: #fff;
+    border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 14.5px;
+    color: var(--text-2); transition: all 0.15s; font-family: inherit;
+  }
+  .bk-tab:hover { border-color: var(--purple-500); color: var(--text-main); }
+  .bk-tab.active {
+    background: linear-gradient(135deg, #6366F1, #4F46E5);
+    border-color: #4F46E5; color: #fff; box-shadow: 0 6px 16px rgba(99,102,241,0.3);
+  }
+  .bk-tab-icon { font-size: 22px; }
+  .bk-tab[disabled] { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+  /* Chi nhánh selector */
+  .bk-branch-section { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+  .bk-branch-label { display: block; font-weight: 600; font-size: 13.5px; color: var(--text-2); margin-bottom: 10px; }
+  .bk-branch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .bk-branch-card {
+    display: block; padding: 12px; border: 2px solid var(--border); border-radius: 10px;
+    cursor: pointer; transition: all 0.15s; background: #fff;
+  }
+  .bk-branch-card input[type=radio] { display: none; }
+  .bk-branch-card:hover { border-color: var(--purple-500); }
+  .bk-branch-card:has(input:checked) {
+    border-color: #4F46E5; background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(79,70,229,0.05));
+  }
+  .bk-branch-name { font-weight: 700; font-size: 14px; color: var(--text-main); margin-bottom: 4px; }
+  .bk-branch-addr { font-size: 12px; color: var(--text-3); line-height: 1.4; }
+  @media (max-width: 640px) {
+    .bk-branch-grid { grid-template-columns: 1fr; }
+  }
+
   .bk-method-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 10px;
   }
   .bk-method-card {
@@ -4145,19 +4181,6 @@
       <img src="assets/images/logo-ffc.png?v=2" alt="FFC — Fix Fast Center" />
     </a>
 
-    <form class="search-bar" role="search" onsubmit="event.preventDefault();">
-      <svg class="search-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="11" cy="11" r="8"/>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <input type="text" name="q" data-i18n-attr="placeholder:header.search" placeholder="Tìm kiếm" />
-      <button type="submit" class="search-submit" aria-label="Tìm kiếm">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="11" cy="11" r="8"/>
-          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-      </button>
-    </form>
 
     <div class="header-actions" id="headerActions">
       <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối">
@@ -4454,41 +4477,41 @@
         <p data-i18n="page.laptop.issues.sub">Chúng tôi xử lý tất cả lỗi phổ biến tới phức tạp, kể cả main và chip BGA</p>
       </div>
       <div class="card-grid">
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Laptop không lên nguồn / chập điện — yêu cầu chẩn đoán & sửa')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
-          <h3 data-i18n="page.laptop.issue1.title">Không lên nguồn / chập điện</h3>
-          <p data-i18n="page.laptop.issue1.desc">Đo dòng, kiểm tra mosfet, IC nguồn, sửa chữa hoặc thay main tùy mức độ.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>350.000₫</div>
+          <h3>Không lên nguồn / chập điện</h3>
+          <p>Đo dòng, kiểm tra mosfet, IC nguồn, sửa chữa hoặc thay main tùy mức độ.</p>
+          <div class="price-tag"><span class="from">từ</span>350.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Thay màn hình LCD/LED laptop — yêu cầu báo giá theo model')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-          <h3 data-i18n="page.laptop.issue2.title">Thay màn hình LCD/LED</h3>
-          <p data-i18n="page.laptop.issue2.desc">Màn nguyên bản, đủ độ phân giải gốc. Bảo hành 6 tháng kể cả lỗi điểm chết.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>1.200.000₫</div>
+          <h3>Thay màn hình LCD/LED</h3>
+          <p>Màn nguyên bản, đủ độ phân giải gốc. Bảo hành 6 tháng kể cả lỗi điểm chết.</p>
+          <div class="price-tag"><span class="from">từ</span>1.200.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Vệ sinh laptop + tra keo tản nhiệt Arctic MX-4')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-6 0v4"/><rect x="2" y="9" width="20" height="13" rx="2"/></svg></div>
-          <h3 data-i18n="page.laptop.issue3.title">Vệ sinh + tra keo tản nhiệt</h3>
-          <p data-i18n="page.laptop.issue3.desc">Tháo lắp toàn bộ, vệ sinh quạt, thay keo Arctic MX-4, giảm nhiệt độ 10-15°C.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>250.000₫</div>
+          <h3>Vệ sinh + tra keo tản nhiệt</h3>
+          <p>Tháo lắp toàn bộ, vệ sinh quạt, thay keo Arctic MX-4, giảm nhiệt độ 10-15°C.</p>
+          <div class="price-tag"><span class="from">từ</span>250.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Thay pin laptop — yêu cầu báo giá pin theo model')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M6 2v6a4 4 0 0 0 8 0V2"/><line x1="6" y1="22" x2="14" y2="22"/></svg></div>
-          <h3 data-i18n="page.laptop.issue4.title">Thay pin laptop</h3>
-          <p data-i18n="page.laptop.issue4.desc">Pin original / Pisen / hãng OEM uy tín. Đo dung lượng thực trước khi giao.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>700.000₫</div>
+          <h3>Thay pin laptop</h3>
+          <p>Pin original / Pisen / hãng OEM uy tín. Đo dung lượng thực trước khi giao.</p>
+          <div class="price-tag"><span class="from">từ</span>700.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Nâng cấp RAM / SSD laptop — clone Windows giữ data')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg></div>
-          <h3 data-i18n="page.laptop.issue5.title">Nâng cấp RAM / SSD</h3>
-          <p data-i18n="page.laptop.issue5.desc">Tư vấn cấu hình phù hợp, clone Windows giữ nguyên dữ liệu, không cài lại.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>200.000₫</div>
+          <h3>Nâng cấp RAM / SSD</h3>
+          <p>Tư vấn cấu hình phù hợp, clone Windows giữ nguyên dữ liệu, không cài lại.</p>
+          <div class="price-tag"><span class="from">từ</span>200.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('laptop','','Sửa main / chipset laptop — đóng chip BGA')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-          <h3 data-i18n="page.laptop.issue6.title">Sửa main, sửa chipset</h3>
-          <p data-i18n="page.laptop.issue6.desc">Đóng lại chip BGA bằng máy hàn chuyên dụng, hấp lại main bị ngấm nước.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>800.000₫</div>
+          <h3>Sửa main, sửa chipset</h3>
+          <p>Đóng lại chip BGA bằng máy hàn chuyên dụng, hấp lại main bị ngấm nước.</p>
+          <div class="price-tag"><span class="from">từ</span>800.000₫</div>
         </div>
       </div>
     </div>
@@ -4505,6 +4528,58 @@
         <div class="step"><h4 data-i18n="page.laptop.step2.t">Báo giá & duyệt</h4><p data-i18n="page.laptop.step2.d">Báo giá rõ từng hạng mục, khách duyệt qua Zalo/SMS mới tiến hành. Không phát sinh chi phí.</p></div>
         <div class="step"><h4 data-i18n="page.laptop.step3.t">Sửa chữa</h4><p data-i18n="page.laptop.step3.d">KTV chuyên dòng máy đảm nhận. Cập nhật tiến độ qua app, có camera ghi hình toàn bộ.</p></div>
         <div class="step"><h4 data-i18n="page.laptop.step4.t">Test & bàn giao</h4><p data-i18n="page.laptop.step4.d">Test stress 30 phút, đo nhiệt, đo pin, in hoá đơn điện tử + tem bảo hành QR code.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Laptop service catalog (giống mac) ===== -->
+  <section class="sec" style="padding-top: 20px;">
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="#home"><svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg> <span>Trang chủ</span></a>
+        <span class="sep">›</span>
+        <span class="current">Loại hình sửa chữa Laptop</span>
+      </div>
+
+      <div class="filter-box">
+        <div class="filter-box-head">
+          <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span>Chọn theo tiêu chí</span>
+        </div>
+        <div class="chips-icon-row" id="laptopPartChips">
+          <a class="chip-icon active" data-part="all" href="#laptop"><span>Tất cả</span></a>
+          <a class="chip-icon" data-part="screen" href="#laptop"><span>Màn hình</span></a>
+          <a class="chip-icon" data-part="keyboard" href="#laptop"><span>Bàn phím</span></a>
+          <a class="chip-icon" data-part="battery" href="#laptop"><span>Pin</span></a>
+          <a class="chip-icon" data-part="ssd" href="#laptop"><span>SSD / HDD</span></a>
+          <a class="chip-icon" data-part="ram" href="#laptop"><span>RAM</span></a>
+          <a class="chip-icon" data-part="mainboard" href="#laptop"><span>Mainboard</span></a>
+          <a class="chip-icon" data-part="clean" href="#laptop"><span>Vệ sinh</span></a>
+          <a class="chip-icon" data-part="fan" href="#laptop"><span>Quạt tản nhiệt</span></a>
+          <a class="chip-icon" data-part="hinge" href="#laptop"><span>Bản lề</span></a>
+          <a class="chip-icon" data-part="charger" href="#laptop"><span>Sạc Adapter</span></a>
+        </div>
+      </div>
+
+      <div class="sort-row">
+        <span class="badge-tag">
+          <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          <span>Sắp xếp theo</span>
+        </span>
+        <select id="laptopSortSelect">
+          <option value="popular">Phổ biến nhất</option>
+          <option value="price-asc">Giá thấp → cao</option>
+          <option value="price-desc">Giá cao → thấp</option>
+          <option value="name">Tên A → Z</option>
+        </select>
+      </div>
+
+      <div class="sec-head" style="text-align:left; margin-bottom:20px;">
+        <h2 style="font-size:24px;">Loại hình sửa chữa Laptop</h2>
+      </div>
+
+      <div class="service-grid" id="laptopServiceGrid">
+        <!-- Auto-rendered by JS -->
       </div>
     </div>
   </section>
@@ -4531,41 +4606,41 @@
         <p data-i18n="page.mac.issues.sub">Từ MacBook Air đến Mac Pro, từ vệ sinh tới sửa main M-series</p>
       </div>
       <div class="card-grid">
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Thay màn hình Retina MacBook — yêu cầu báo giá theo model')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></div>
-          <h3 data-i18n="page.mac.issue1.title">Thay màn hình Retina</h3>
-          <p data-i18n="page.mac.issue1.desc">Màn nguyên cụm 100% chính hãng tháo máy, đủ True Tone, ProMotion (nếu có).</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>4.500.000₫</div>
+          <h3>Thay màn hình Retina</h3>
+          <p>Màn nguyên cụm 100% chính hãng tháo máy, đủ True Tone, ProMotion (nếu có).</p>
+          <div class="price-tag"><span class="from">từ</span>4.500.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Sửa main MacBook M1/M2/M3 — chẩn đoán & báo giá')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-          <h3 data-i18n="page.mac.issue2.title">Sửa main M1/M2/M3</h3>
-          <p data-i18n="page.mac.issue2.desc">Hấp lại main bị oxy hoá, sửa lỗi nguồn, nâng cấp SSD trên chip Apple Silicon.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>1.800.000₫</div>
+          <h3>Sửa main M1/M2/M3</h3>
+          <p>Hấp lại main bị oxy hoá, sửa lỗi nguồn, nâng cấp SSD trên chip Apple Silicon.</p>
+          <div class="price-tag"><span class="from">từ</span>1.800.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Thay bàn phím Magic Keyboard MacBook')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg></div>
-          <h3 data-i18n="page.mac.issue3.title">Thay bàn phím Magic Keyboard</h3>
-          <p data-i18n="page.mac.issue3.desc">Khay nhôm + bàn phím + pin liền, không cần thay từng phím lẻ.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>2.500.000₫</div>
+          <h3>Thay bàn phím Magic Keyboard</h3>
+          <p>Khay nhôm + bàn phím + pin liền, không cần thay từng phím lẻ.</p>
+          <div class="price-tag"><span class="from">từ</span>2.500.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Phục hồi dữ liệu MacBook — SSD chết / ngấm nước')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0z"/><line x1="12" y1="3" x2="12" y2="21"/></svg></div>
-          <h3 data-i18n="page.mac.issue4.title">Phục hồi dữ liệu</h3>
-          <p data-i18n="page.mac.issue4.desc">Cứu dữ liệu từ SSD chết, máy ngấm nước, bị bypass Activation Lock.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>1.500.000₫</div>
+          <h3>Phục hồi dữ liệu</h3>
+          <p>Cứu dữ liệu từ SSD chết, máy ngấm nước, bị bypass Activation Lock.</p>
+          <div class="price-tag"><span class="from">từ</span>1.500.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Thay pin MacBook — pin nguyên cụm Apple')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><path d="M6 2v6a4 4 0 0 0 8 0V2"/><line x1="6" y1="22" x2="14" y2="22"/></svg></div>
-          <h3 data-i18n="page.mac.issue5.title">Thay pin MacBook</h3>
-          <p data-i18n="page.mac.issue5.desc">Pin nguyên cụm Apple, đo cycle thật. Giữ nguyên 2 năm bảo hành Apple.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>1.800.000₫</div>
+          <h3>Thay pin MacBook</h3>
+          <p>Pin nguyên cụm Apple, đo cycle thật. Giữ nguyên 2 năm bảo hành Apple.</p>
+          <div class="price-tag"><span class="from">từ</span>1.800.000₫</div>
         </div>
-        <div class="info-card">
+        <div class="info-card" style="cursor:pointer;" onclick="openBookingPresetSvc('mac','','Vệ sinh MacBook + tra keo Liquid Metal')">
           <div class="icon-circle"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-          <h3 data-i18n="page.mac.issue6.title">Vệ sinh + tra keo Liquid Metal</h3>
-          <p data-i18n="page.mac.issue6.desc">Dòng MacBook Pro 16" và Mac Pro dùng keo liquid metal — giảm nhiệt ~20°C.</p>
-          <div class="price-tag"><span class="from" data-i18n="page.from">từ</span>500.000₫</div>
+          <h3>Vệ sinh + tra keo Liquid Metal</h3>
+          <p>Dòng MacBook Pro 16" và Mac Pro dùng keo liquid metal — giảm nhiệt ~20°C.</p>
+          <div class="price-tag"><span class="from">từ</span>500.000₫</div>
         </div>
       </div>
     </div>
@@ -5206,8 +5281,8 @@
         <a href="#" onclick="event.preventDefault(); openBookingModal()" data-i18n="ff.support.book">Đặt lịch sửa online</a>
         <a href="chat.html" data-i18n="ff.support.contact">Liên hệ kỹ thuật viên</a>
         <a href="chat.html" data-i18n="ff.support.chat">Chat 24/7</a>
-        <a href="#" onclick="event.preventDefault(); openQuoteModal()" data-i18n="ff.support.faq">Câu hỏi thường gặp</a>
-        <a href="#" onclick="event.preventDefault(); openQuoteModal()" data-i18n="ff.support.guide">Hướng dẫn bảo quản</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('faq')" data-i18n="ff.support.faq">Câu hỏi thường gặp</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('care')" data-i18n="ff.support.guide">Hướng dẫn bảo quản</a>
       </div>
 
       <!-- Bảng giá -->
@@ -5220,16 +5295,16 @@
       <!-- Chính sách -->
       <div class="ff-col">
         <div class="ff-label" data-i18n="ff.label.legal">CHÍNH SÁCH</div>
-        <a href="#" data-i18n="ff.legal.warranty">Chính sách bảo hành</a>
-        <a href="#" data-i18n="ff.legal.privacy">Chính sách bảo mật</a>
-        <a href="#" data-i18n="ff.legal.payment">Chính sách thanh toán</a>
-        <a href="#" data-i18n="ff.legal.refund">Chính sách hoàn tiền</a>
-        <a href="#" data-i18n="ff.legal.terms">Điều khoản sử dụng</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('warranty')" data-i18n="ff.legal.warranty">Chính sách bảo hành</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('privacy')" data-i18n="ff.legal.privacy">Chính sách bảo mật</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('payment')" data-i18n="ff.legal.payment">Chính sách thanh toán</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('refund')" data-i18n="ff.legal.refund">Chính sách hoàn tiền</a>
+        <a href="#" onclick="event.preventDefault(); openPolicy('terms')" data-i18n="ff.legal.terms">Điều khoản sử dụng</a>
       </div>
 
       <!-- CTA -->
       <div class="ff-cta">
-        <a href="#" class="ff-cta-btn" data-i18n="ff.cta">Bắt Đầu Ngay</a>
+        <a href="#" class="ff-cta-btn" onclick="event.preventDefault(); openBookingModal()" data-i18n="ff.cta">Bắt Đầu Ngay</a>
         <div class="ff-email">support@ffcenter.vn</div>
       </div>
     </div>
@@ -5394,24 +5469,64 @@
         <!-- Section 2: Method -->
         <div class="bk-section">
           <h3 data-i18n="booking.s2.title">2. Hình thức tiếp nhận</h3>
-          <div class="bk-method-grid">
-            <label class="bk-method-card" id="bkMethodStore">
-              <input type="radio" name="method" value="store" checked />
-              <div class="bk-method-icon">🏪</div>
-              <div class="bk-method-name" data-i18n="booking.method.store">Mang đến tiệm</div>
-              <div class="bk-method-desc" data-i18n="booking.method.store.desc">227 Nguyễn Văn Cừ, Q.5</div>
-            </label>
-            <label class="bk-method-card" id="bkMethodShip">
-              <input type="radio" name="method" value="ship" />
-              <div class="bk-method-icon">🚚</div>
-              <div class="bk-method-name" data-i18n="booking.method.ship">Shipper đến nhà lấy máy</div>
-              <div class="bk-method-desc" data-i18n="booking.method.ship.desc">Tiệm book GHN/Lalamove tới lấy máy chở về tiệm (~30k/chiều)</div>
-            </label>
+          <!-- 2 Tab buttons -->
+          <div class="bk-tab-row" id="bkTabRow">
+            <button type="button" class="bk-tab active" id="bkTabStore" onclick="bkSelectTab('store')">
+              <span class="bk-tab-icon">🏪</span>
+              <span class="bk-tab-label">Tại cửa hàng</span>
+            </button>
+            <button type="button" class="bk-tab" id="bkTabOnsite" onclick="bkSelectTab('onsite')">
+              <span class="bk-tab-icon">🏠</span>
+              <span class="bk-tab-label">Tận nơi (KTV đến nhà)</span>
+            </button>
+          </div>
+
+          <!-- Sub-options khi tab "Tại cửa hàng" active -->
+          <div id="bkSubStore">
+            <div class="bk-method-grid">
+              <label class="bk-method-card" id="bkMethodStore">
+                <input type="radio" name="method" value="store" checked />
+                <div class="bk-method-icon">🚶</div>
+                <div class="bk-method-name">Khách mang đến</div>
+                <div class="bk-method-desc">Tự đem máy đến chi nhánh</div>
+              </label>
+              <label class="bk-method-card" id="bkMethodShip">
+                <input type="radio" name="method" value="ship" />
+                <div class="bk-method-icon">🚚</div>
+                <div class="bk-method-name">Shipper FFC đến lấy</div>
+                <div class="bk-method-desc">Nhân viên FFC ship máy về tiệm + giao trả (~30k/chiều)</div>
+              </label>
+            </div>
+            <!-- Chi nhánh selector -->
+            <div class="bk-branch-section">
+              <label class="bk-branch-label">Chọn chi nhánh:</label>
+              <div class="bk-branch-grid">
+                <label class="bk-branch-card">
+                  <input type="radio" name="branch" value="Q5" checked />
+                  <div class="bk-branch-name">FFC Quận 5</div>
+                  <div class="bk-branch-addr">227 Nguyễn Văn Cừ, P.4, Q.5</div>
+                </label>
+                <label class="bk-branch-card">
+                  <input type="radio" name="branch" value="ThuDuc" />
+                  <div class="bk-branch-name">FFC Thủ Đức</div>
+                  <div class="bk-branch-addr">97 Dân Chủ, P.Bình Thọ, TP.Thủ Đức</div>
+                </label>
+                <label class="bk-branch-card">
+                  <input type="radio" name="branch" value="TanBinh" />
+                  <div class="bk-branch-name">FFC Tân Bình</div>
+                  <div class="bk-branch-addr">216 Hoàng Văn Thụ, P.4, Q.Tân Bình</div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-options khi tab "Tận nơi" active -->
+          <div class="bk-method-grid" id="bkSubOnsite" style="display:none;">
             <label class="bk-method-card" id="bkMethodOnsite">
               <input type="radio" name="method" value="onsite" />
               <div class="bk-method-icon">🏠</div>
-              <div class="bk-method-name" data-i18n="booking.method.onsite">KTV đến nhà sửa</div>
-              <div class="bk-method-desc" data-i18n="booking.method.onsite.desc">Chỉ cho PC/iMac/TV (khó vận chuyển). Phí đi lại 100k, nội thành HCM</div>
+              <div class="bk-method-name">KTV đến nhà sửa</div>
+              <div class="bk-method-desc">Phí đi lại 100k, nội thành HCM. Phù hợp PC/iMac/TV và sửa nhanh laptop</div>
             </label>
           </div>
           <div id="bkMethodHint" style="display:none; margin-top:8px; padding:10px 12px; background:#FEF3C7; border:1px solid #FCD34D; border-radius:8px; font-size:12px; color:#92400E;">
@@ -5439,7 +5554,7 @@
           <div class="bk-grid-2" style="margin-top:14px;">
             <div class="bk-field">
               <label data-i18n="booking.date">Ngày hẹn <span style="color:#dc2626;">*</span></label>
-              <input type="date" name="date" required />
+              <input type="date" name="date" required data-date-bound="future-3mo" />
             </div>
             <div class="bk-field">
               <label data-i18n="booking.timeSlot">Khung giờ <span style="color:#dc2626;">*</span></label>
@@ -5543,6 +5658,7 @@
           <div class="profile-name">
             Sam Phạm
             <span class="verified-badge" data-i18n="profile.verified">✓ Đã xác thực</span>
+            <span id="profileAccountBadge" style="display:none; margin-left:6px; font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:6px;"></span>
           </div>
           <div class="profile-role-tag" data-i18n="profile.role.short">Kỹ thuật viên</div>
           <div class="profile-meta">sam@ausynclab.io · TP. Hồ Chí Minh</div>
@@ -5574,7 +5690,7 @@
           </div>
           <div>
             <label data-i18n="profile.field.dob">Ngày sinh</label>
-            <input type="date" data-field="dob" />
+            <input type="date" data-field="dob" data-date-bound="past" id="profile-dob-input" />
           </div>
           <div>
             <label data-i18n="profile.field.gender">Giới tính</label>
@@ -5641,6 +5757,9 @@
           <div><label>Website</label><input type="url" data-field="website" placeholder="https://..." /></div>
         </div>
       </div>
+
+      <!-- Hồ sơ mở rộng (Sinh viên/Doanh nghiệp) — render dynamically -->
+      <div id="profileAccountSection"></div>
     </div>
 
     <div class="modal-foot">
@@ -6012,13 +6131,28 @@
     `;
 
     if (loggedIn) {
-      /* Read latest profile data so the header reflects edited name/avatar */
-      const profile = (typeof loadProfile === 'function') ? loadProfile() : { fullname: 'Sam Phạm' };
-      const initials = (profile.fullname || 'PA')
-        .split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
-      const avatarInner = profile.avatar
-        ? `<img src="${profile.avatar}" alt="">`
-        : initials;
+      /* Staff login (admin/manager/cashier/reception/technician) — đọc từ sessionStorage.ffc_user */
+      let displayName = null, displayRole = null, displayAvatar = null;
+      if (role && role !== 'customer') {
+        try {
+          const u = JSON.parse(sessionStorage.getItem('ffc_user') || 'null');
+          if (u) {
+            displayName = u.full_name || u.username;
+            displayAvatar = u.avatar_url;
+            const roleMap = {
+              admin: 'Quản trị viên', manager: 'Quản lý', cashier: 'Thu ngân',
+              reception: 'Lễ tân', technician: 'Kỹ thuật viên',
+            };
+            displayRole = roleMap[role] || role;
+          }
+        } catch (_) {}
+      }
+      /* Fallback (customer hoặc không có sessionStorage) → loadProfile */
+      const profile = (typeof loadProfile === 'function') ? loadProfile() : { fullname: '' };
+      const fullname = displayName || profile.fullname || 'User';
+      const avatar   = displayAvatar || profile.avatar;
+      const initials = fullname.split(/\s+/).map(w => w[0]).slice(-2).join('').toUpperCase();
+      const avatarInner = avatar ? `<img src="${avatar}" alt="">` : initials;
 
       headerActions.innerHTML = `
         ${langPillHtml}
@@ -6034,8 +6168,8 @@
           <button class="user-trigger" onclick="toggleUserDropdown(event)">
             <div class="avatar">${avatarInner}</div>
             <div style="display:flex; flex-direction:column; line-height:1.1; align-items:flex-start;">
-              <span class="name">${profile.fullname || 'User'}</span>
-              <span class="role-tag">${t('user.role')}</span>
+              <span class="name">${fullname}</span>
+              <span class="role-tag">${displayRole || t('user.role')}</span>
             </div>
             <span class="chevron">▾</span>
           </button>
@@ -6470,6 +6604,76 @@
     if (removeBtn) removeBtn.style.display = data.avatar ? 'inline-flex' : 'none';
   }
 
+  /* ─── Account type badge & profile section (Sinh viên / Doanh nghiệp) ─── */
+  function renderAccountBadge(backend) {
+    const badge = document.getElementById('profileAccountBadge');
+    if (!badge) return;
+    const type = backend && backend.account_type;
+    if (type === 'student') {
+      badge.textContent = '🎓 Sinh viên';
+      badge.style.background = '#e0f2fe';
+      badge.style.color = '#0369a1';
+      badge.style.display = 'inline-block';
+    } else if (type === 'business') {
+      badge.textContent = '🏢 Doanh nghiệp';
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#92400e';
+      badge.style.display = 'inline-block';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function renderAccountProfile(backend) {
+    const box = document.getElementById('profileAccountSection');
+    if (!box) return;
+    if (!backend) { box.innerHTML = ''; return; }
+
+    const cardStyle = 'background:#fff; border:1px solid #e2e8f0; border-radius:14px; padding:18px 20px; margin-top:16px; box-shadow:0 1px 3px rgba(0,0,0,0.04);';
+    const headStyle = 'font-size:16px; font-weight:700; color:#0f172a; margin:0 0 4px; display:flex; align-items:center; gap:8px;';
+    const subStyle  = 'font-size:13px; color:#64748b; margin:0 0 14px;';
+    const rowStyle  = 'display:grid; grid-template-columns:140px 1fr; gap:6px 14px; padding:8px 0; border-top:1px solid #f1f5f9; font-size:14px;';
+    const labelStyle = 'color:#64748b; font-weight:500;';
+    const valStyle   = 'color:#0f172a; font-weight:600;';
+    const statusPill = (s) => {
+      const map = { approved: ['Đã duyệt','#dcfce7','#15803d'], pending: ['Chờ duyệt','#fef3c7','#92400e'], rejected: ['Bị từ chối','#fee2e2','#b91c1c'] };
+      const [t,bg,fg] = map[s] || ['—','#e2e8f0','#475569'];
+      return `<span style="background:${bg}; color:${fg}; padding:3px 10px; border-radius:12px; font-size:11.5px; font-weight:700;">${t}</span>`;
+    };
+    const row = (k, v) => `<div style="${rowStyle}"><div style="${labelStyle}">${k}</div><div style="${valStyle}">${v || '—'}</div></div>`;
+
+    if (backend.account_type === 'student' && backend.student_profile) {
+      const p = backend.student_profile;
+      const typeLabel = { student: 'Học sinh – Sinh viên', teacher: 'Giáo viên – Giảng viên', exam: 'Sĩ tử' }[p.student_type] || p.student_type;
+      box.innerHTML = `
+        <div style="${cardStyle}">
+          <h3 style="${headStyle}">🎓 Hồ sơ Sinh viên ${statusPill(p.status)}</h3>
+          <p style="${subStyle}">Giảm <b style="color:#15803d;">10% phí công sửa chữa</b> khi đã được duyệt</p>
+          ${row('Loại', typeLabel)}
+          ${row('Trường', p.school)}
+          ${row(p.student_type === 'exam' ? 'Số dự thi' : 'Mã HS/SV/GV', p.student_id)}
+          ${p.cccd ? row('CCCD', p.cccd) : ''}
+          ${row('Họ tên trên thẻ', p.card_name)}
+          ${p.card_exp ? row('Ngày hết hạn thẻ', p.card_exp) : ''}
+          ${p.school_email ? row('Email trường', p.school_email) : ''}
+        </div>`;
+    } else if (backend.account_type === 'business' && backend.business_profile) {
+      const p = backend.business_profile;
+      box.innerHTML = `
+        <div style="${cardStyle}">
+          <h3 style="${headStyle}">🏢 Hồ sơ Doanh nghiệp ${statusPill(p.status)}</h3>
+          <p style="${subStyle}">Chiết khấu <b style="color:#15803d;">15%/hoá đơn</b> + hoá đơn có MST khi đã được duyệt</p>
+          ${row('Mã số thuế', p.tax_code)}
+          ${row('Tên công ty', p.company_name)}
+          ${row('Địa chỉ', p.company_address)}
+          ${row('Email công ty', p.company_email)}
+          ${row('CCCD người uỷ quyền', p.auth_person_cccd)}
+        </div>`;
+    } else {
+      box.innerHTML = '';
+    }
+  }
+
   function saveProfile() {
     const existing = loadProfile();
     const data = {};
@@ -6551,10 +6755,18 @@
       avatar:   (backend && backend.avatar_url) || saved.avatar || '',
     };
 
+    /* Set max ngày sinh = hôm nay (không cho chọn ngày tương lai) */
+    const dobInput = document.getElementById('profile-dob-input');
+    if (dobInput) dobInput.max = new Date().toISOString().split('T')[0];
+
     /* Fill form fields */
     document.querySelectorAll('#profileModal [data-field]').forEach(el => {
       if (el.dataset.field in data) el.value = data[el.dataset.field];
     });
+
+    /* Hiện badge account_type + render section hồ sơ mở rộng */
+    renderAccountBadge(backend);
+    renderAccountProfile(backend);
 
     /* Phone is read-only for customers — it's their identity key, can't change */
     const phoneInput = document.querySelector('#profileModal [data-field="phone"]');
@@ -7350,36 +7562,64 @@
       if (e.target.name === 'method') syncOnsitePreview();
     });
 
-    /* Lọc phương thức tiếp nhận theo loại dịch vụ:
-       - Phone/laptop/Mac/data/upgrade → khách tự mang hoặc shipper (KHÔNG có "KTV đến nhà")
-       - PC/iMac/màn rời/buildpc/khác → cho phép cả 3 (KTV đến nhà mặc định cho PC)
-       - Vệ sinh → cho phép cả 3 */
-    const ONSITE_ALLOWED = new Set(['pc', 'imac', 'monitor', 'buildpc', 'clean', 'other']);
+    /* Rule per service type:
+       - phone, data, upgrade           → chỉ Tại cửa hàng (ẩn tab Tận nơi)
+       - buildpc                        → chỉ Tận nơi      (ẩn tab Tại cửa hàng)
+       - laptop, mac, pc, imac, monitor, clean, other → cả 2 tab */
+    const ONLY_STORE = new Set(['phone', 'data', 'upgrade']);
+    const ONLY_ONSITE = new Set(['buildpc']);
+
+    /* Đổi tab — set radio method + show/hide sub-options */
+    window.bkSelectTab = function (tab) {
+      const tabStore = document.getElementById('bkTabStore');
+      const tabOnsite = document.getElementById('bkTabOnsite');
+      const subStore = document.getElementById('bkSubStore');
+      const subOnsite = document.getElementById('bkSubOnsite');
+      if (!tabStore || !tabOnsite) return;
+
+      if (tab === 'onsite') {
+        tabStore.classList.remove('active');
+        tabOnsite.classList.add('active');
+        subStore.style.display = 'none';
+        subOnsite.style.display = '';
+        const r = subOnsite.querySelector('input[type=radio]');
+        if (r) r.checked = true;
+      } else {
+        tabStore.classList.add('active');
+        tabOnsite.classList.remove('active');
+        subStore.style.display = '';
+        subOnsite.style.display = 'none';
+        const r = document.querySelector('#bkMethodStore input[type=radio]');
+        if (r) r.checked = true;
+      }
+      if (typeof syncOnsitePreview === 'function') syncOnsitePreview();
+    };
 
     window.bkOnServiceTypeChange = function () {
       const sel = document.getElementById('bkServiceType');
       if (!sel) return;
       const svc = sel.value;
-      const onsiteCard = document.getElementById('bkMethodOnsite');
-      const hint = document.getElementById('bkMethodHint');
-      const onsiteRadio = onsiteCard ? onsiteCard.querySelector('input[type=radio]') : null;
-      const allowOnsite = !svc || ONSITE_ALLOWED.has(svc);
+      const tabStore = document.getElementById('bkTabStore');
+      const tabOnsite = document.getElementById('bkTabOnsite');
+      if (!tabStore || !tabOnsite) return;
 
-      if (onsiteCard) onsiteCard.style.display = allowOnsite ? '' : 'none';
-      if (hint) hint.style.display = (!allowOnsite && svc) ? '' : 'none';
+      /* Reset disabled */
+      tabStore.disabled = false;
+      tabOnsite.disabled = false;
 
-      /* Nếu khách đang chọn onsite mà thiết bị mới không hỗ trợ → ép về store */
-      if (!allowOnsite && onsiteRadio && onsiteRadio.checked) {
-        const storeRadio = document.querySelector('#bkMethodStore input[type=radio]');
-        if (storeRadio) {
-          storeRadio.checked = true;
-          syncOnsitePreview();
+      if (ONLY_STORE.has(svc)) {
+        tabOnsite.disabled = true;
+        bkSelectTab('store');
+      } else if (ONLY_ONSITE.has(svc)) {
+        tabStore.disabled = true;
+        bkSelectTab('onsite');
+      } else {
+        /* Cả 2 tab — giữ tab hiện tại nếu đã chọn, mặc định Store cho laptop/mac/phone, Onsite cho pc/imac/monitor */
+        if (['pc', 'imac', 'monitor'].includes(svc)) {
+          bkSelectTab('onsite');
+        } else if (!tabStore.classList.contains('active') && !tabOnsite.classList.contains('active')) {
+          bkSelectTab('store');
         }
-      }
-      /* Nếu PC/iMac → mặc định gợi ý KTV đến nhà */
-      if (['pc', 'imac', 'monitor'].includes(svc) && onsiteRadio) {
-        onsiteRadio.checked = true;
-        syncOnsitePreview();
       }
     };
 
@@ -7447,6 +7687,18 @@
 
       let booking;
       try {
+        /* Map branch code → tên chi nhánh đầy đủ, prefix vào address để admin biết khách chọn chi nhánh nào */
+        const BRANCHES = {
+          Q5:      'FFC Quận 5 — 227 Nguyễn Văn Cừ, P.4, Q.5',
+          ThuDuc:  'FFC Thủ Đức — 97 Dân Chủ, P.Bình Thọ, TP.Thủ Đức',
+          TanBinh: 'FFC Tân Bình — 216 Hoàng Văn Thụ, P.4, Q.Tân Bình',
+        };
+        let addressFull = data.address || '';
+        if (data.method !== 'onsite' && data.branch) {
+          const branchInfo = BRANCHES[data.branch] || data.branch;
+          addressFull = `[Chi nhánh: ${branchInfo}]` + (addressFull ? ` | KH: ${addressFull}` : '');
+        }
+
         const res = await api('/bookings', {
           method: 'POST',
           body: {
@@ -7457,7 +7709,7 @@
             device:           data.device,
             issue:            data.issue,
             method:           data.method,
-            address:          data.address || undefined,
+            address:          addressFull || undefined,
             appointment_date: data.date,
             time_slot:        data.timeSlot,
             note:             data.note || undefined,
@@ -7480,6 +7732,37 @@
         `Mã: ${code} · KTV sẽ gọi xác nhận trong 15 phút qua SĐT ${data.phone}`;
       toast.classList.add('show');
       setTimeout(() => toast.classList.remove('show'), 5000);
+    };
+
+    /* ────────────── HEADER SEARCH — chỉ tìm dịch vụ ──────────────
+     * Match keyword với 3 nhóm dịch vụ (điện thoại / mac / laptop) → goPage. */
+    window.handleHeaderSearch = function (form) {
+      const input = form.querySelector('input[name="q"]');
+      const q = (input.value || '').trim();
+      if (!q) return;
+
+      const ql = q.toLowerCase().replace(/đ/g, 'd');
+      const KEYWORDS = {
+        phone: ['phone','dien thoai','điện thoại','iphone','samsung','xiaomi','oppo','pin','man','màn','sac','sạc','loa','camera'],
+        mac:   ['mac','macbook','imac','ipad','apple'],
+        laptop:['laptop','asus','dell','hp','lenovo','msi','acer','keyboard','bàn phím','ban phim'],
+      };
+      for (const page in KEYWORDS) {
+        if (KEYWORDS[page].some(k => ql.includes(k))) {
+          if (typeof goPage === 'function') goPage(page);
+          else window.location.hash = page;
+          input.value = '';
+          return;
+        }
+      }
+
+      /* Không khớp → toast báo */
+      input.classList.add('search-no-match');
+      input.placeholder = 'Không tìm thấy dịch vụ — thử: pin, màn, laptop, macbook...';
+      setTimeout(() => {
+        input.classList.remove('search-no-match');
+        input.placeholder = 'Tìm dịch vụ (pin, màn, laptop, macbook...)';
+      }, 2500);
     };
 
     /* ────────────── LOOKUP MODAL (tra cứu phiếu công khai) ────────────── */
@@ -7904,21 +8187,40 @@
       };
       list.sort(sorters[macSort] || sorters.popular);
       const fmt = (n) => n.toLocaleString('vi-VN') + '₫';
-      host.innerHTML = list.length ? list.map(s => `
-        <div class="service-card">
-          <div class="thumb">
-            ${s.badge ? `<div class="badge-corner ${s.badge === 'hot' ? 'hot' : ''}">${s.badge === 'hot' ? 'HOT' : 'MỚI'}</div>` : ''}
-            ${s.emoji}
+      const MAC_PART_META = {
+        screen:    { label: 'Màn hình',   color: '#2563eb', bg: 'rgba(37,99,235,0.10)' },
+        battery:   { label: 'Pin',         color: '#16a34a', bg: 'rgba(22,163,74,0.10)' },
+        keyboard:  { label: 'Bàn phím',    color: '#7c3aed', bg: 'rgba(124,58,237,0.10)' },
+        ssd:       { label: 'SSD',         color: '#0891b2', bg: 'rgba(8,145,178,0.10)' },
+        mainboard: { label: 'Mainboard',   color: '#db2777', bg: 'rgba(219,39,119,0.10)' },
+        ram:       { label: 'RAM',         color: '#ea580c', bg: 'rgba(234,88,12,0.10)' },
+        clean:     { label: 'Vệ sinh',     color: '#0ea5e9', bg: 'rgba(14,165,233,0.10)' },
+        fan:       { label: 'Tản nhiệt',   color: '#06b6d4', bg: 'rgba(6,182,212,0.10)' },
+        speaker:   { label: 'Loa',         color: '#f59e0b', bg: 'rgba(245,158,11,0.10)' },
+        hinge:     { label: 'Bản lề',      color: '#475569', bg: 'rgba(71,85,105,0.10)' },
+        case:      { label: 'Vỏ máy',      color: '#64748b', bg: 'rgba(100,116,139,0.10)' },
+        charger:   { label: 'Sạc Adapter', color: '#ca8a04', bg: 'rgba(202,138,4,0.10)' },
+      };
+      host.innerHTML = list.length ? list.map(s => {
+        const meta = MAC_PART_META[s.part] || { label: 'Khác', color: '#64748b', bg: 'rgba(100,116,139,0.10)' };
+        return `
+        <a href="#" class="svc-card-v2" data-svc-type="mac" data-svc-title="${s.title.replace(/"/g, '&quot;')}" data-svc-price="${s.price}"
+           style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; text-decoration:none; color:inherit; cursor:pointer; transition: transform .15s, box-shadow .15s, border-color .15s; min-height:170px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <span style="display:inline-block; padding:4px 10px; background:${meta.bg}; color:${meta.color}; font-size:11px; font-weight:700; letter-spacing:0.4px; border-radius:6px; text-transform:uppercase;">${meta.label}</span>
+            ${s.badge === 'hot' ? '<span style="display:inline-block; padding:4px 8px; background:#dc2626; color:#fff; font-size:10px; font-weight:700; border-radius:6px;">🔥 HOT</span>' : ''}
           </div>
-          <div class="body">
-            <div class="title">${s.title}</div>
-            <div class="meta">
-              <span class="price">${fmt(s.price)}</span>
-              <span class="warranty-tag">BH ${s.warranty}</span>
+          <div style="flex:1; font-size:14px; line-height:1.4; font-weight:600; min-height:40px;">${s.title}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:10px;">
+            <div>
+              <div style="font-size:18px; font-weight:800; color:${meta.color}; line-height:1;">${fmt(s.price)}</div>
+              <div style="font-size:11px; color:var(--text-3); margin-top:3px;">🛡️ BH ${s.warranty}</div>
             </div>
+            <div style="font-size:12px; color:var(--blue); font-weight:600;">Đặt sửa →</div>
           </div>
-        </div>
-      `).join('') : `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-3);">Không có dịch vụ nào trong nhóm này</div>`;
+        </a>
+        `;
+      }).join('') : `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-3);">Không có dịch vụ nào trong nhóm này</div>`;
     }
 
     document.addEventListener('click', (e) => {
@@ -7938,6 +8240,103 @@
       });
     }
     renderMacServices();
+
+    /* ============ Laptop service catalog (iCare-style) ============ */
+    const LAPTOP_SERVICES = [
+      { part: 'screen',    emoji: '💻', title: 'Thay màn hình ASUS ROG Strix 15.6" 144Hz', price: 3500000, warranty: '6 tháng', badge: 'hot' },
+      { part: 'screen',    emoji: '💻', title: 'Thay màn hình Dell XPS 13/15 4K OLED', price: 5500000, warranty: '6 tháng' },
+      { part: 'screen',    emoji: '💻', title: 'Thay màn hình HP Pavilion 15.6" Full HD', price: 1800000, warranty: '6 tháng' },
+      { part: 'screen',    emoji: '💻', title: 'Thay màn hình Lenovo ThinkPad 14" IPS', price: 1500000, warranty: '6 tháng' },
+      { part: 'screen',    emoji: '💻', title: 'Thay màn hình MSI Gaming 17.3" 240Hz', price: 4200000, warranty: '6 tháng' },
+      { part: 'keyboard',  emoji: '⌨️', title: 'Thay bàn phím ASUS ROG có LED RGB', price: 1200000, warranty: '3 tháng' },
+      { part: 'keyboard',  emoji: '⌨️', title: 'Thay bàn phím Dell Latitude / Inspiron', price: 650000, warranty: '3 tháng' },
+      { part: 'keyboard',  emoji: '⌨️', title: 'Thay bàn phím Lenovo ThinkPad có TrackPoint', price: 850000, warranty: '3 tháng' },
+      { part: 'battery',   emoji: '🔋', title: 'Thay pin laptop ASUS / HP Pisen 4 cell', price: 700000, warranty: '6 tháng', badge: 'hot' },
+      { part: 'battery',   emoji: '🔋', title: 'Thay pin Dell XPS / Latitude original', price: 1200000, warranty: '6 tháng' },
+      { part: 'battery',   emoji: '🔋', title: 'Thay pin Lenovo ThinkPad 6 cell long-life', price: 1100000, warranty: '6 tháng' },
+      { part: 'ssd',       emoji: '💾', title: 'Nâng cấp SSD Samsung 980 1TB NVMe (clone Windows)', price: 1890000, warranty: '12 tháng', badge: 'hot' },
+      { part: 'ssd',       emoji: '💾', title: 'Nâng cấp SSD Kingston NV2 500GB + clone', price: 1100000, warranty: '12 tháng' },
+      { part: 'ssd',       emoji: '💾', title: 'Thay SSD Samsung 990 Pro 2TB cho gaming laptop', price: 4500000, warranty: '12 tháng' },
+      { part: 'ram',       emoji: '📊', title: 'Nâng cấp RAM Crucial DDR4 16GB 3200', price: 980000, warranty: '12 tháng' },
+      { part: 'ram',       emoji: '📊', title: 'Nâng cấp RAM DDR5 32GB cho laptop gaming', price: 2800000, warranty: '12 tháng' },
+      { part: 'mainboard', emoji: '🧠', title: 'Sửa main laptop — đóng chip BGA / hấp main', price: 1500000, warranty: '3 tháng' },
+      { part: 'mainboard', emoji: '🧠', title: 'Sửa main Dell XPS — lỗi không lên nguồn', price: 2200000, warranty: '3 tháng' },
+      { part: 'mainboard', emoji: '🧠', title: 'Sửa main MSI Gaming — lỗi VGA rời', price: 2800000, warranty: '3 tháng' },
+      { part: 'clean',     emoji: '🧹', title: 'Vệ sinh + tra keo CPU/GPU Arctic MX-4', price: 250000, warranty: '3 tháng', badge: 'hot' },
+      { part: 'clean',     emoji: '🧹', title: 'Vệ sinh chuyên sâu + thay liquid metal (ROG/Predator)', price: 500000, warranty: '3 tháng' },
+      { part: 'fan',       emoji: '🌬️', title: 'Thay quạt tản nhiệt laptop ASUS / Lenovo', price: 450000, warranty: '6 tháng' },
+      { part: 'fan',       emoji: '🌬️', title: 'Thay cụm tản nhiệt + heatpipe (cho gaming laptop)', price: 850000, warranty: '6 tháng' },
+      { part: 'hinge',     emoji: '🔗', title: 'Sửa / thay bản lề laptop bị gãy', price: 650000, warranty: '6 tháng' },
+      { part: 'charger',   emoji: '⚡', title: 'Sạc adapter Dell / HP 65W chính hãng', price: 450000, warranty: '12 tháng' },
+      { part: 'charger',   emoji: '⚡', title: 'Sạc adapter ASUS ROG 200W gaming', price: 850000, warranty: '12 tháng' },
+    ];
+
+    let laptopFilter = 'all';
+    let laptopSort = 'popular';
+
+    function renderLaptopServices() {
+      const host = document.getElementById('laptopServiceGrid');
+      if (!host) return;
+      let list = laptopFilter === 'all' ? LAPTOP_SERVICES.slice() : LAPTOP_SERVICES.filter(s => s.part === laptopFilter);
+      const sorters = {
+        popular: (a, b) => (b.badge === 'hot' ? 1 : 0) - (a.badge === 'hot' ? 1 : 0),
+        'price-asc':  (a, b) => a.price - b.price,
+        'price-desc': (a, b) => b.price - a.price,
+        name: (a, b) => a.title.localeCompare(b.title, 'vi'),
+      };
+      list.sort(sorters[laptopSort] || sorters.popular);
+      const fmt = (n) => n.toLocaleString('vi-VN') + '₫';
+      const LAPTOP_PART_META = {
+        screen:    { label: 'Màn hình',   color: '#2563eb', bg: 'rgba(37,99,235,0.10)' },
+        keyboard:  { label: 'Bàn phím',    color: '#7c3aed', bg: 'rgba(124,58,237,0.10)' },
+        battery:   { label: 'Pin',         color: '#16a34a', bg: 'rgba(22,163,74,0.10)' },
+        ssd:       { label: 'SSD / HDD',   color: '#0891b2', bg: 'rgba(8,145,178,0.10)' },
+        ram:       { label: 'RAM',         color: '#ea580c', bg: 'rgba(234,88,12,0.10)' },
+        mainboard: { label: 'Mainboard',   color: '#db2777', bg: 'rgba(219,39,119,0.10)' },
+        clean:     { label: 'Vệ sinh',     color: '#0ea5e9', bg: 'rgba(14,165,233,0.10)' },
+        fan:       { label: 'Tản nhiệt',   color: '#06b6d4', bg: 'rgba(6,182,212,0.10)' },
+        hinge:     { label: 'Bản lề',      color: '#475569', bg: 'rgba(71,85,105,0.10)' },
+        charger:   { label: 'Sạc Adapter', color: '#ca8a04', bg: 'rgba(202,138,4,0.10)' },
+      };
+      host.innerHTML = list.length ? list.map(s => {
+        const meta = LAPTOP_PART_META[s.part] || { label: 'Khác', color: '#64748b', bg: 'rgba(100,116,139,0.10)' };
+        return `
+        <a href="#" class="svc-card-v2" data-svc-type="laptop" data-svc-title="${s.title.replace(/"/g, '&quot;')}" data-svc-price="${s.price}"
+           style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:10px; text-decoration:none; color:inherit; cursor:pointer; transition: transform .15s, box-shadow .15s, border-color .15s; min-height:170px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+            <span style="display:inline-block; padding:4px 10px; background:${meta.bg}; color:${meta.color}; font-size:11px; font-weight:700; letter-spacing:0.4px; border-radius:6px; text-transform:uppercase;">${meta.label}</span>
+            ${s.badge === 'hot' ? '<span style="display:inline-block; padding:4px 8px; background:#dc2626; color:#fff; font-size:10px; font-weight:700; border-radius:6px;">🔥 HOT</span>' : ''}
+          </div>
+          <div style="flex:1; font-size:14px; line-height:1.4; font-weight:600; min-height:40px;">${s.title}</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed var(--border); padding-top:10px;">
+            <div>
+              <div style="font-size:18px; font-weight:800; color:${meta.color}; line-height:1;">${fmt(s.price)}</div>
+              <div style="font-size:11px; color:var(--text-3); margin-top:3px;">🛡️ BH ${s.warranty}</div>
+            </div>
+            <div style="font-size:12px; color:var(--blue); font-weight:600;">Đặt sửa →</div>
+          </div>
+        </a>
+        `;
+      }).join('') : `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-3);">Không có dịch vụ nào trong nhóm này</div>`;
+    }
+
+    document.addEventListener('click', (e) => {
+      const chip = e.target.closest('#laptopPartChips .chip-icon');
+      if (chip) {
+        e.preventDefault();
+        laptopFilter = chip.dataset.part;
+        document.querySelectorAll('#laptopPartChips .chip-icon').forEach(c => c.classList.toggle('active', c === chip));
+        renderLaptopServices();
+      }
+    });
+    const laptopSortEl = document.getElementById('laptopSortSelect');
+    if (laptopSortEl) {
+      laptopSortEl.addEventListener('change', (e) => {
+        laptopSort = e.target.value;
+        renderLaptopServices();
+      });
+    }
+    renderLaptopServices();
 
     /* ============ Phone service catalog (iCare-style) ============ */
     const PHONE_SERVICES = [
@@ -8026,23 +8425,30 @@
       }).join('') : `<div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-3);">Không có dịch vụ nào trong nhóm này</div>`;
     }
 
-    /* Click card → mở booking modal với device + issue đã pre-fill */
+    /* Click card → mở booking modal với device + issue đã pre-fill
+       Đọc data-svc-type để biết phone/mac/laptop (default phone nếu thiếu) */
     document.addEventListener('click', (e) => {
       const card = e.target.closest('.svc-card-v2');
-      if (card) {
-        e.preventDefault();
-        const title = card.dataset.svcTitle || '';
-        const price = card.dataset.svcPrice || '';
-        if (typeof openBookingPresetSvc === 'function') {
-          openBookingPresetSvc('phone');
-          setTimeout(() => {
-            const form = document.getElementById('bookingForm');
-            if (form) {
-              if (form.device) form.device.value = title;
-              if (form.issue) form.issue.value = `Yêu cầu: ${title} (giá tham khảo ${parseInt(price).toLocaleString('vi-VN')}₫)`;
+      if (!card) return;
+      /* Skip nếu card có onclick riêng (mac/laptop em đã wire) */
+      if (card.hasAttribute('onclick')) return;
+      e.preventDefault();
+      const title = card.dataset.svcTitle || '';
+      const price = card.dataset.svcPrice || '';
+      const svcType = card.dataset.svcType || 'phone';
+      if (typeof openBookingPresetSvc === 'function') {
+        openBookingPresetSvc(svcType);
+        setTimeout(() => {
+          const form = document.getElementById('bookingForm');
+          if (form) {
+            if (form.device) form.device.value = title;
+            if (form.issue && price) {
+              form.issue.value = `Yêu cầu: ${title} (giá tham khảo ${parseInt(price).toLocaleString('vi-VN')}₫)`;
+            } else if (form.issue) {
+              form.issue.value = `Yêu cầu: ${title}`;
             }
-          }, 100);
-        }
+          }
+        }, 100);
       }
     });
 
@@ -8070,6 +8476,217 @@
       renderPhoneServices();
     });
   })();
+</script>
+
+<!-- ========== POLICY MODAL ========== -->
+<div id="policyModal" class="policy-modal" onclick="if(event.target===this) closePolicy()">
+  <div class="policy-card" role="dialog" aria-labelledby="policyTitle">
+    <div class="policy-head">
+      <h2 id="policyTitle">Chính sách</h2>
+      <button class="policy-close" onclick="closePolicy()" aria-label="Đóng">✕</button>
+    </div>
+    <div id="policyBody" class="policy-body"></div>
+  </div>
+</div>
+<style>
+  .policy-modal {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(15,23,42,0.65); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .policy-modal.open { display: flex; }
+  .policy-card {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 720px;
+    max-height: 85vh; overflow: hidden; display: flex; flex-direction: column;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+  }
+  .policy-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 28px; border-bottom: 1px solid #e2e8f0;
+  }
+  .policy-head h2 { margin: 0; font-size: 22px; color: #1e293b; font-weight: 700; }
+  .policy-close {
+    background: none; border: none; font-size: 22px; cursor: pointer; color: #64748b;
+    width: 36px; height: 36px; border-radius: 8px; transition: background 0.15s;
+  }
+  .policy-close:hover { background: #f1f5f9; color: #1e293b; }
+  .policy-body {
+    padding: 24px 28px; overflow-y: auto; color: #334155; line-height: 1.7; font-size: 15px;
+  }
+  .policy-body h3 { margin: 22px 0 10px; color: #1e293b; font-size: 17px; }
+  .policy-body h3:first-child { margin-top: 0; }
+  .policy-body p { margin: 0 0 12px; }
+  .policy-body ul { margin: 0 0 12px; padding-left: 22px; }
+  .policy-body li { margin-bottom: 6px; }
+</style>
+<script>
+(function () {
+  const POLICIES = {
+    warranty: {
+      title: 'Chính sách bảo hành',
+      body: `
+        <h3>Thời gian bảo hành</h3>
+        <ul>
+          <li>Màn hình: <strong>6 tháng</strong></li>
+          <li>Pin (Pisen / Original): <strong>6 tháng</strong></li>
+          <li>Camera, loa, sạc, mic: <strong>3 tháng</strong></li>
+          <li>Ép kính / dán kính: <strong>1 tháng</strong></li>
+          <li>Linh kiện main / chipset: <strong>3 tháng</strong></li>
+        </ul>
+        <h3>Điều kiện bảo hành</h3>
+        <ul>
+          <li>Còn trong thời hạn, có phiếu sửa chữa hoặc mã FFC-XXXX</li>
+          <li>Tem bảo hành nguyên vẹn, không bị bóc/rách</li>
+          <li>Thiết bị không có dấu hiệu va đập mạnh, vào nước sau khi sửa</li>
+        </ul>
+        <h3>Không bảo hành</h3>
+        <ul>
+          <li>Hỏng do người dùng (rơi vỡ, ngấm nước, cài phần mềm lỗi)</li>
+          <li>Tự ý tháo máy hoặc sửa tại nơi khác sau khi bảo hành</li>
+        </ul>
+      `,
+    },
+    privacy: {
+      title: 'Chính sách bảo mật',
+      body: `
+        <h3>Thông tin chúng tôi thu thập</h3>
+        <ul>
+          <li>Thông tin liên hệ: họ tên, số điện thoại, email, địa chỉ</li>
+          <li>Thông tin thiết bị: model, IMEI, mô tả lỗi</li>
+          <li>Lịch sử phiếu sửa và thanh toán</li>
+        </ul>
+        <h3>Mục đích sử dụng</h3>
+        <ul>
+          <li>Xử lý phiếu sửa, liên hệ trao đổi tiến độ</li>
+          <li>Xuất hóa đơn, ghi nhận bảo hành</li>
+          <li>Cải thiện chất lượng dịch vụ qua khảo sát</li>
+        </ul>
+        <h3>Cam kết</h3>
+        <p>Chúng tôi <strong>không chia sẻ</strong> thông tin khách hàng cho bên thứ ba ngoại trừ trường hợp pháp luật yêu cầu. Mật khẩu được mã hóa bằng bcrypt, không lưu dạng plain text.</p>
+      `,
+    },
+    payment: {
+      title: 'Chính sách thanh toán',
+      body: `
+        <h3>Phương thức thanh toán</h3>
+        <ul>
+          <li>Tiền mặt tại quầy</li>
+          <li>Chuyển khoản ngân hàng (Vietcombank, Techcombank, MB Bank)</li>
+          <li>Quẹt thẻ tín dụng / ghi nợ</li>
+          <li>Ví điện tử (MoMo, ZaloPay)</li>
+        </ul>
+        <h3>Quy trình</h3>
+        <ul>
+          <li>Báo giá trước khi sửa — không phát sinh chi phí ẩn</li>
+          <li>Thanh toán đầy đủ khi nhận lại thiết bị</li>
+          <li>Có thể đặt cọc 30-50% với phiếu trên 2.000.000đ</li>
+        </ul>
+        <h3>Hóa đơn</h3>
+        <p>Xuất hóa đơn điện tử (mã <code>INV-2026-XXXX</code>) sau mỗi giao dịch. Hỗ trợ xuất hóa đơn VAT nếu khách yêu cầu.</p>
+      `,
+    },
+    refund: {
+      title: 'Chính sách hoàn tiền',
+      body: `
+        <h3>Trường hợp được hoàn tiền</h3>
+        <ul>
+          <li>Khách báo lỗi nhưng kiểm tra không có lỗi → hoàn 100% phí dịch vụ</li>
+          <li>Linh kiện thay thế lỗi trong 24h → đổi mới miễn phí</li>
+          <li>Hủy phiếu trước khi KTV bắt đầu sửa → hoàn 100% cọc</li>
+        </ul>
+        <h3>Không hoàn tiền</h3>
+        <ul>
+          <li>Đã hoàn thành sửa chữa và bàn giao thiết bị</li>
+          <li>Khách thay đổi ý kiến sau khi KTV đã mua linh kiện</li>
+        </ul>
+        <h3>Thời gian hoàn tiền</h3>
+        <p>Trong vòng <strong>3-5 ngày làm việc</strong> qua phương thức ban đầu (tiền mặt / chuyển khoản / hoàn vào thẻ).</p>
+      `,
+    },
+    faq: {
+      title: 'Câu hỏi thường gặp',
+      body: `
+        <h3>Sửa máy bao lâu xong?</h3>
+        <p>Đa số lỗi phổ thông xử lý trong <strong>30-60 phút</strong>, có chỗ ngồi chờ tại quầy. Lỗi main/chip phức tạp có thể mất 1-3 ngày.</p>
+        <h3>Báo giá có phí không?</h3>
+        <p><strong>Hoàn toàn miễn phí.</strong> KTV chẩn đoán, báo giá rõ ràng trước, khách đồng ý mới sửa.</p>
+        <h3>Có nhận sửa tại nhà không?</h3>
+        <p>Có. Dịch vụ "Sửa máy tính tận nơi" trong phạm vi TP.HCM, phí đi lại 50.000đ.</p>
+        <h3>Linh kiện có phải hàng chính hãng?</h3>
+        <p>Cam kết 100% chính hãng. Có tem bảo hành riêng cho từng loại linh kiện. Khách kiểm tra IMEI/serial trước khi nhận máy.</p>
+        <h3>Tra cứu phiếu sửa như thế nào?</h3>
+        <p>Vào trang chủ → click "Tra cứu phiếu sửa" → nhập mã FFC-XXXX hoặc số điện thoại.</p>
+        <h3>Thanh toán bằng phương thức nào?</h3>
+        <p>Tiền mặt, chuyển khoản, quẹt thẻ, ví điện tử (MoMo, ZaloPay). Xuất hóa đơn VAT nếu khách yêu cầu.</p>
+      `,
+    },
+    care: {
+      title: 'Hướng dẫn bảo quản thiết bị',
+      body: `
+        <h3>Sau khi thay màn / pin</h3>
+        <ul>
+          <li>Không sử dụng máy trong 30 phút đầu để keo dán khô hoàn toàn</li>
+          <li>Tránh bóp mạnh hoặc tì lên màn hình ít nhất 24h</li>
+          <li>Không sạc khi máy còn nóng — đợi nguội mới cắm sạc</li>
+        </ul>
+        <h3>Bảo quản pin lâu bền</h3>
+        <ul>
+          <li>Sạc khi pin còn 20-30%, rút ra khi đạt 80-90%</li>
+          <li>Tránh dùng sạc nhanh thường xuyên</li>
+          <li>Không để máy ngoài trời nắng nóng quá 35°C</li>
+        </ul>
+        <h3>Vệ sinh máy</h3>
+        <ul>
+          <li>Lau màn hình bằng khăn microfiber khô hoặc dung dịch chuyên dụng</li>
+          <li>Vệ sinh laptop định kỳ <strong>6 tháng/lần</strong> để tránh bụi tản nhiệt</li>
+          <li>Tránh xịt nước/cồn trực tiếp lên bàn phím</li>
+        </ul>
+        <h3>Khi nào nên mang đi sửa?</h3>
+        <ul>
+          <li>Máy nóng bất thường, chạy chậm rõ rệt</li>
+          <li>Pin tụt nhanh dưới 6 tiếng</li>
+          <li>Cổng sạc lỏng, sạc chập chờn</li>
+        </ul>
+      `,
+    },
+    terms: {
+      title: 'Điều khoản sử dụng',
+      body: `
+        <h3>Quyền và nghĩa vụ của khách hàng</h3>
+        <ul>
+          <li>Cung cấp thông tin chính xác khi đặt lịch và đăng ký</li>
+          <li>Mật khẩu là trách nhiệm cá nhân — không chia sẻ với người khác</li>
+          <li>Nhận lại thiết bị trong vòng 30 ngày sau khi báo hoàn thành</li>
+        </ul>
+        <h3>Quyền và nghĩa vụ của FFC</h3>
+        <ul>
+          <li>Bảo mật thông tin khách theo Chính sách bảo mật</li>
+          <li>Báo giá trung thực trước khi sửa</li>
+          <li>Bảo hành theo Chính sách bảo hành đã công bố</li>
+        </ul>
+        <h3>Giải quyết tranh chấp</h3>
+        <p>Mọi tranh chấp được giải quyết qua thương lượng. Nếu không thành, đưa ra Tòa án có thẩm quyền tại TP.HCM.</p>
+      `,
+    },
+  };
+
+  window.openPolicy = function (type) {
+    const p = POLICIES[type];
+    if (!p) return;
+    document.getElementById('policyTitle').textContent = p.title;
+    document.getElementById('policyBody').innerHTML = p.body;
+    const modal = document.getElementById('policyModal');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+  window.closePolicy = function () {
+    document.getElementById('policyModal').classList.remove('open');
+    document.body.style.overflow = '';
+  };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('policyModal').classList.contains('open')) closePolicy();
+  });
+})();
 </script>
 
 </body>

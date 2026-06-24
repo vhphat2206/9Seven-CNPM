@@ -10,6 +10,7 @@
 <script src="assets/js/i18n.js?v=5"></script>
 <script src="assets/js/config.js?v=1"></script>
 <script src="assets/js/api.js?v=1"></script>
+<script src="assets/js/date-bounds.js?v=1"></script>
 <style>
   :root {
     --purple-600: #9333EA;
@@ -1509,6 +1510,34 @@
     color: #475569;
     line-height: 1.55;
   }
+  /* ── 4-item feature list dưới tagline ── */
+  .brand-features {
+    list-style: none; padding: 0; margin: 0 0 22px;
+    display: grid; gap: 10px;
+  }
+  .brand-features li {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(99,102,241,0.12);
+    border-radius: 12px;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .brand-features li:hover {
+    background: rgba(255,255,255,0.85);
+    transform: translateX(4px);
+  }
+  .brand-features .bf-icon {
+    font-size: 22px; flex-shrink: 0;
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #6366F1, #4F46E5);
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(99,102,241,0.25);
+  }
+  .brand-features .bf-text {
+    font-size: 14px; font-weight: 500; color: #334155; line-height: 1.45;
+  }
 
   /* ========== REGISTER MODAL ========== */
   .reg-modal {
@@ -1520,10 +1549,91 @@
   .reg-modal.open { display: flex; }
   .reg-card {
     background: #fff; border-radius: 16px; padding: 32px;
-    width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto;
+    width: 100%; max-width: 640px; max-height: 90vh; overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     animation: slideUp 0.25s ease-out;
   }
+  .reg-section { font-size: 15px; font-weight: 700; color: #0f172a; margin: 18px 0 12px; }
+  .reg-section:first-of-type { margin-top: 8px; }
+  .reg-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 540px) { .reg-row { grid-template-columns: 1fr; gap: 0; } }
+  .reg-card .pw-hint {
+    font-size: 12.5px; color: #64748b; margin-top: -6px; margin-bottom: 12px;
+    padding-left: 2px; transition: color 0.15s;
+  }
+  .reg-card .pw-hint.ok { color: #15803d; font-weight: 500; }
+  .reg-checkbox {
+    display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #475569;
+    margin: 14px 0 4px; line-height: 1.5; cursor: pointer;
+  }
+  .reg-checkbox input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; flex-shrink: 0; cursor: pointer; padding: 0; border: 1.5px solid #cbd5e1; }
+  .reg-checkbox a { color: #4f46e5; text-decoration: none; font-weight: 500; }
+  .reg-checkbox a:hover { text-decoration: underline; }
+  .reg-terms-text {
+    font-size: 12.5px; color: #64748b; line-height: 1.55; margin: 4px 0 14px;
+  }
+  .reg-terms-text a { color: #4f46e5; text-decoration: none; font-weight: 500; }
+  .reg-terms-text a:hover { text-decoration: underline; }
+  .reg-divider {
+    border: none; border-top: 1.5px dashed #cbd5e1; margin: 18px 0 14px;
+  }
+  /* Toggle switch (Apple-style) */
+  .reg-toggle-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+  }
+  .reg-toggle-row .toggle-label {
+    flex: 1;
+  }
+  .reg-toggle-row .toggle-label .tt-title {
+    font-size: 14px; font-weight: 600; color: #0f172a; display: block;
+  }
+  .reg-toggle-row .toggle-label .tt-perk {
+    font-size: 12px; color: #64748b; margin-top: 3px; display: block;
+  }
+  .reg-toggle-row .toggle-label .tt-perk b { color: #dc2626; }
+  .reg-switch {
+    position: relative; display: inline-block; width: 44px; height: 24px;
+    flex-shrink: 0;
+  }
+  .reg-switch input { opacity: 0; width: 0; height: 0; padding: 0; border: 0; margin: 0; }
+  .reg-switch .slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #cbd5e1; transition: 0.3s; border-radius: 24px;
+  }
+  .reg-switch .slider::before {
+    position: absolute; content: ""; height: 18px; width: 18px;
+    left: 3px; top: 3px; background: #fff; transition: 0.3s; border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .reg-switch input:checked + .slider { background: #4f46e5; }
+  .reg-switch input:checked + .slider::before { transform: translateX(20px); }
+  /* Sub-form khi toggle bật */
+  .reg-subform {
+    background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 16px; margin: 4px 0 14px;
+    animation: slideDown 0.25s ease-out;
+  }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .reg-card select {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 9px;
+    font-size: 14px; font-family: inherit; background: #fff; box-sizing: border-box;
+    cursor: pointer;
+  }
+  .reg-card select:focus { outline: none; border-color: #6366F1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+  .reg-radio-group { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 14px; }
+  .reg-radio { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; color: #334155; cursor: pointer; font-weight: 500; }
+  .reg-radio input[type="radio"] { width: 16px; height: 16px; accent-color: #4f46e5; cursor: pointer; padding: 0; border: 0; }
+  .reg-upload-section { margin-top: 6px; }
+  .reg-upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 540px) { .reg-upload-row { grid-template-columns: 1fr; } }
+  .reg-upload-box .up-label { font-size: 12.5px; font-weight: 600; color: #475569; margin-bottom: 6px; }
+  .up-drop {
+    border: 1.5px dashed #cbd5e1; border-radius: 10px; padding: 18px 12px;
+    text-align: center; background: #fff; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .up-drop:hover { border-color: #4f46e5; background: #fafbff; }
+  .up-drop img { max-width: 100%; max-height: 120px; border-radius: 6px; object-fit: contain; }
   .reg-card h2 { margin: 0 0 6px; font-size: 22px; color: #1e293b; font-weight: 700; }
   .reg-card .sub { margin: 0 0 22px; color: #64748b; font-size: 14px; line-height: 1.5; }
   .reg-card .form-group { margin-bottom: 14px; }
@@ -1534,6 +1644,17 @@
     box-sizing: border-box;
   }
   .reg-card input:focus { outline: none; border-color: #6366F1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+  /* Password input với toggle eye */
+  .reg-card .pw-wrap { position: relative; }
+  .reg-card .pw-wrap input { padding-right: 42px; }
+  .reg-card .pw-toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; padding: 6px;
+    color: #94a3b8; display: flex; align-items: center; justify-content: center;
+    border-radius: 6px; transition: color 0.15s, background 0.15s;
+  }
+  .reg-card .pw-toggle:hover { color: #475569; background: #f1f5f9; }
+  .reg-card .pw-toggle svg { width: 18px; height: 18px; }
   .reg-card .reg-error {
     background: #fef2f2; color: #b91c1c; padding: 10px 14px; border-radius: 8px;
     font-size: 13px; margin-bottom: 14px; display: none;
@@ -1555,6 +1676,8 @@
   .reg-actions .reg-submit { background: linear-gradient(135deg, #6366F1, #4F46E5); color: #fff; }
   .reg-actions .reg-submit:hover { opacity: 0.92; }
   .reg-actions .reg-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+  .reg-actions .reg-submit-finish { background: linear-gradient(135deg, #ef4444, #dc2626); flex: 2; }
+  .reg-actions .reg-cancel { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -1627,6 +1750,7 @@
           Đội ngũ kỹ thuật viên giàu kinh nghiệm. Chẩn đoán miễn phí, báo giá minh bạch trước khi sửa.
         </p>
       </div>
+
 
       <!-- Policy/info link cards -->
       <div class="info-cards">
@@ -1778,7 +1902,7 @@
         </div>
 
         <div class="forgot-row">
-          <a href="#" data-i18n="login.forgot">Quên mật khẩu?</a>
+          <a href="#" onclick="event.preventDefault(); openForgot();" data-i18n="login.forgot">Quên mật khẩu?</a>
         </div>
 
         <button type="submit" class="login-btn">
@@ -1957,41 +2081,307 @@
     <div class="reg-error" id="regError"></div>
     <div class="reg-success" id="regSuccess"></div>
     <form onsubmit="event.preventDefault(); registerCustomer();">
-      <div class="form-group">
-        <label for="regName">Họ và tên <span style="color:#dc2626;">*</span></label>
-        <input type="text" id="regName" required autocomplete="name" placeholder="Nguyễn Văn A" />
+      <h3 class="reg-section">Thông tin cá nhân</h3>
+      <div class="reg-row">
+        <div class="form-group">
+          <label for="regName">Họ và tên <span style="color:#dc2626;">*</span></label>
+          <input type="text" id="regName" required autocomplete="name" placeholder="Nguyễn Văn A" />
+        </div>
+        <div class="form-group">
+          <label for="regDob">Ngày sinh</label>
+          <input type="date" id="regDob" data-date-bound="past" />
+        </div>
       </div>
-      <div class="form-group">
-        <label for="regPhone">Số điện thoại <span style="color:#dc2626;">*</span></label>
-        <input type="tel" id="regPhone" pattern="[0-9]{9,11}" required autocomplete="tel" placeholder="0901234567" />
+      <div class="reg-row">
+        <div class="form-group">
+          <label for="regPhone">Số điện thoại <span style="color:#dc2626;">*</span></label>
+          <input type="tel" id="regPhone" pattern="[0-9]{9,11}" required autocomplete="tel" placeholder="0901234567" />
+        </div>
+        <div class="form-group">
+          <label for="regEmail">Email <span style="color:#dc2626;">*</span></label>
+          <input type="email" id="regEmail" required autocomplete="email" placeholder="email@example.com" />
+          <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Dùng để nhận mã OTP khi quên mật khẩu</small>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="regUsername">Tên đăng nhập <span style="color:#dc2626;">*</span></label>
-        <input type="text" id="regUsername" required autocomplete="username" placeholder="vd: nguyenvana" pattern="[a-z0-9]{3,30}" />
-        <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu/khoảng trắng/ký tự đặc biệt</small>
+
+      <h3 class="reg-section">Tạo mật khẩu</h3>
+      <div class="reg-row">
+        <div class="form-group">
+          <label for="regPassword">Mật khẩu <span style="color:#dc2626;">*</span></label>
+          <div class="pw-wrap">
+            <input type="password" id="regPassword" minlength="8" required autocomplete="new-password" />
+            <button type="button" class="pw-toggle" onclick="togglePwField('regPassword', 'regPwIcon')" aria-label="Show password">
+              <svg id="regPwIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="regPasswordConfirm">Nhập lại mật khẩu <span style="color:#dc2626;">*</span></label>
+          <div class="pw-wrap">
+            <input type="password" id="regPasswordConfirm" minlength="8" required autocomplete="new-password" />
+            <button type="button" class="pw-toggle" onclick="togglePwField('regPasswordConfirm', 'regPwConfIcon')" aria-label="Show password">
+              <svg id="regPwConfIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="regPassword">Mật khẩu <span style="color:#dc2626;">*</span></label>
-        <input type="password" id="regPassword" minlength="8" required autocomplete="new-password" />
-        <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Tối thiểu 8 ký tự, gồm chữ HOA, chữ thường và số (vd: Khach123)</small>
+      <div id="regPwHint" class="pw-hint">Mật khẩu tối thiểu 8 ký tự, có chữ HOA, chữ thường và số</div>
+
+      <label class="reg-checkbox">
+        <input type="checkbox" id="regAgree" required />
+        <span>Tôi đã đọc và đồng ý với <a href="#" onclick="event.preventDefault(); openPolicy('terms');">Điều khoản sử dụng</a> và <a href="#" onclick="event.preventDefault(); openPolicy('privacy');">Chính sách bảo mật</a> của FFC.</span>
+      </label>
+
+      <hr class="reg-divider" />
+
+      <div class="reg-toggle-row">
+        <div class="toggle-label">
+          <span class="tt-title">Tôi là Học sinh – Sinh viên / Giáo viên – Giảng viên</span>
+          <span class="tt-perk">🎓 Giảm <b>10% phí công sửa chữa</b> khi xuất trình thẻ SV/GV</span>
+        </div>
+        <label class="reg-switch">
+          <input type="checkbox" id="regStudent" onchange="toggleStudentForm()" />
+          <span class="slider"></span>
+        </label>
       </div>
-      <div class="form-group">
-        <label for="regPasswordConfirm">Xác nhận mật khẩu <span style="color:#dc2626;">*</span></label>
-        <input type="password" id="regPasswordConfirm" minlength="8" required autocomplete="new-password" />
+
+      <!-- Sub-form khi toggle Học sinh/SV bật -->
+      <div id="regStudentForm" class="reg-subform" style="display:none;">
+        <div class="reg-radio-group">
+          <label class="reg-radio"><input type="radio" name="studentType" value="student" checked onchange="updateStudentTypeForm()" /><span>Học sinh – Sinh viên</span></label>
+          <label class="reg-radio"><input type="radio" name="studentType" value="teacher" onchange="updateStudentTypeForm()" /><span>Giáo viên – Giảng viên</span></label>
+          <label class="reg-radio"><input type="radio" name="studentType" value="exam" onchange="updateStudentTypeForm()" /><span>Sĩ tử</span></label>
+        </div>
+        <div class="reg-row">
+          <div class="form-group">
+            <label id="regLevelLabel">Cấp học</label>
+            <select id="regLevel">
+              <option value="">Chọn cấp học</option>
+              <option value="primary">Tiểu học</option>
+              <option value="secondary">THCS</option>
+              <option value="highschool">THPT</option>
+              <option value="college">Cao đẳng / Trung cấp</option>
+              <option value="university">Đại học</option>
+              <option value="postgrad">Sau đại học</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Tên trường</label>
+            <input type="text" id="regSchool" placeholder="VD: ĐH Sư phạm Kỹ thuật TP.HCM" />
+          </div>
+        </div>
+        <div class="reg-row">
+          <div class="form-group">
+            <label id="regIdLabel">Mã học sinh/sinh viên</label>
+            <input type="text" id="regStudentId" placeholder="Nhập mã HS/SV" />
+          </div>
+          <div class="form-group" id="regCardNameField">
+            <label>Họ tên trên thẻ</label>
+            <input type="text" id="regCardName" placeholder="Như in trên thẻ" />
+          </div>
+          <div class="form-group" id="regCccdField" style="display:none;">
+            <label>Số căn cước công dân</label>
+            <input type="text" id="regCccd" placeholder="Nhập vào số CCCD của bạn" maxlength="12" />
+          </div>
+        </div>
+        <div class="reg-row" id="regExpRow">
+          <div class="form-group" id="regExpField">
+            <label id="regExpLabel">Ngày hết hạn thẻ / ra trường dự kiến</label>
+            <input type="date" id="regCardExp" data-date-bound="future-10y" />
+          </div>
+          <div class="form-group" id="regCardName2Field" style="display:none;">
+            <label>Họ tên trên thẻ</label>
+            <input type="text" id="regCardName2" placeholder="Như in trên giấy dự thi" />
+          </div>
+          <div class="form-group" id="regEmailSchoolField">
+            <label>Email trường <span style="color:#94a3b8; font-weight:400;">(Không bắt buộc)</span></label>
+            <input type="email" id="regSchoolEmail" placeholder="vd: 20110xxx@student.hcmute.edu.vn" />
+          </div>
+        </div>
+        <div class="reg-upload-section">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span id="regUploadTitle" style="font-weight:700; font-size:14px; color:#0f172a;">Tải ảnh thẻ</span>
+            <a id="regUploadSample" href="#" onclick="event.preventDefault(); alert('Mẫu giấy tờ hợp lệ — xem chi tiết tại ffcenter.vn/giay-to-hop-le');" style="display:none; font-size:12.5px; color:#4f46e5; text-decoration:none;">Xem mẫu giấy tờ hợp lệ ›</a>
+          </div>
+          <div id="regUploadNote" style="font-size:12px; color:#64748b; margin-bottom:12px;">Nếu thẻ sinh viên không có niên khoá, vui lòng bổ sung thêm hình ảnh xác minh thời gian học</div>
+          <div class="reg-upload-row">
+            <div class="reg-upload-box" onclick="document.getElementById('regCardFront').click()">
+              <div class="up-label">Mặt trước</div>
+              <input type="file" id="regCardFront" accept="image/*" hidden onchange="previewCardImg(this, 'cardFrontPrev')" />
+              <div class="up-drop" id="cardFrontPrev">
+                <div style="font-size:24px;">⬆️</div>
+                <div style="font-size:13px; color:#475569;">Kéo thả hoặc <b style="color:#dc2626;">Chọn file</b> tải lên</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">JPG, PNG, WEBP, HEIC — Tối đa 10 MB</div>
+              </div>
+            </div>
+            <div class="reg-upload-box" onclick="document.getElementById('regCardBack').click()">
+              <div class="up-label">Mặt sau</div>
+              <input type="file" id="regCardBack" accept="image/*" hidden onchange="previewCardImg(this, 'cardBackPrev')" />
+              <div class="up-drop" id="cardBackPrev">
+                <div style="font-size:24px;">⬆️</div>
+                <div style="font-size:13px; color:#475569;">Kéo thả hoặc <b style="color:#dc2626;">Chọn file</b> tải lên</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">JPG, PNG, WEBP, HEIC — Tối đa 10 MB</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="regEmail">Email <span style="color:#94a3b8; font-weight:400;">(không bắt buộc)</span></label>
-        <input type="email" id="regEmail" autocomplete="email" placeholder="email@example.com" />
+
+      <div class="reg-toggle-row">
+        <div class="toggle-label">
+          <span class="tt-title">Tôi là Khách hàng Doanh nghiệp</span>
+          <span class="tt-perk">🏢 Hợp đồng bảo trì + chiết khấu lên đến <b>15%/hoá đơn</b></span>
+        </div>
+        <label class="reg-switch">
+          <input type="checkbox" id="regBusiness" onchange="toggleBusinessForm()" />
+          <span class="slider"></span>
+        </label>
       </div>
-      <div class="form-group">
-        <label for="regAddress">Địa chỉ <span style="color:#94a3b8; font-weight:400;">(không bắt buộc)</span></label>
-        <input type="text" id="regAddress" autocomplete="street-address" placeholder="123 Lê Lợi, Quận 1, HCM" />
+
+      <!-- Sub-form khi toggle Doanh nghiệp bật -->
+      <div id="regBusinessForm" class="reg-subform" style="display:none;">
+        <div class="reg-row">
+          <div class="form-group">
+            <label>Mã số thuế</label>
+            <input type="text" id="regTaxCode" placeholder="Nhập mã số thuế" maxlength="14" />
+          </div>
+          <div class="form-group">
+            <label>Tên công ty</label>
+            <input type="text" id="regCompanyName" placeholder="Nhập tên công ty" />
+          </div>
+        </div>
+        <div class="reg-row">
+          <div class="form-group">
+            <label>Địa chỉ công ty</label>
+            <input type="text" id="regCompanyAddr" placeholder="Nhập địa chỉ công ty" />
+          </div>
+          <div class="form-group">
+            <label>Địa chỉ email công ty</label>
+            <input type="email" id="regCompanyEmail" placeholder="Nhập địa chỉ email công ty" />
+          </div>
+        </div>
+        <div class="reg-row">
+          <div class="form-group">
+            <label>CCCD / Hộ chiếu người được uỷ quyền</label>
+            <input type="text" id="regAuthCccd" placeholder="Nhập CCCD/Hộ chiếu người được uỷ quyền" />
+          </div>
+          <div class="form-group">
+            <label>Ghi chú <span style="color:#94a3b8; font-weight:400;">(Không bắt buộc)</span></label>
+            <input type="text" id="regBizNote" placeholder="Nhập ghi chú" />
+          </div>
+        </div>
+        <div class="reg-upload-section">
+          <div class="reg-upload-row">
+            <div class="reg-upload-box">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <span class="up-label" style="margin-bottom:0;">Giấy phép kinh doanh</span>
+                <a href="#" onclick="event.preventDefault(); alert('Xem file mẫu giấy phép kinh doanh tại ffcenter.vn/mau-gpkd');" style="font-size:11px; color:#dc2626; text-decoration:none; padding:2px 8px; border:1px solid #fca5a5; border-radius:6px;">Xem file mẫu</a>
+              </div>
+              <input type="file" id="regBizLicense" accept="image/*,.pdf" hidden onchange="previewCardImg(this, 'bizLicPrev')" />
+              <div class="up-drop" id="bizLicPrev" onclick="document.getElementById('regBizLicense').click()">
+                <div style="font-size:24px;">⬆️</div>
+                <div style="font-size:13px; color:#475569;">Kéo thả hoặc <b style="color:#dc2626;">Chọn file</b> tải lên</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">JPG, PNG, WEBP, HEIC, .PDF — Tối đa 5 MB</div>
+              </div>
+            </div>
+            <div class="reg-upload-box">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+                <span class="up-label" style="margin-bottom:0;">Giấy uỷ quyền</span>
+                <a href="#" onclick="event.preventDefault(); alert('Xem file mẫu giấy uỷ quyền tại ffcenter.vn/mau-uy-quyen');" style="font-size:11px; color:#dc2626; text-decoration:none; padding:2px 8px; border:1px solid #fca5a5; border-radius:6px;">Xem file mẫu</a>
+              </div>
+              <input type="file" id="regAuthLetter" accept="image/*,.pdf" hidden onchange="previewCardImg(this, 'authLetPrev')" />
+              <div class="up-drop" id="authLetPrev" onclick="document.getElementById('regAuthLetter').click()">
+                <div style="font-size:24px;">⬆️</div>
+                <div style="font-size:13px; color:#475569;">Kéo thả hoặc <b style="color:#dc2626;">Chọn file</b> tải lên</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:6px;">JPG, PNG, WEBP, HEIC, .PDF — Tối đa 5 MB</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <hr class="reg-divider" style="margin-top:18px;" />
       <div class="reg-actions">
-        <button type="button" class="reg-cancel" onclick="closeRegister()">Hủy</button>
-        <button type="submit" class="reg-submit" id="regSubmitBtn">Tạo tài khoản</button>
+        <button type="button" class="reg-cancel" onclick="closeRegister()">
+          <span style="font-size:16px; line-height:1;">‹</span> Quay lại đăng nhập
+        </button>
+        <button type="submit" class="reg-submit reg-submit-finish" id="regSubmitBtn">Hoàn tất đăng ký</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ========== FORGOT PASSWORD MODAL (3 bước: Email → OTP → MK mới) ========== -->
+<div class="reg-modal" id="forgotModal" onclick="if(event.target===this) closeForgot()">
+  <div class="reg-card" style="max-width:460px;">
+    <h2 id="forgotTitle">Quên mật khẩu</h2>
+    <p class="sub" id="forgotSub">Nhập email đã đăng ký để nhận mã OTP đặt lại mật khẩu.</p>
+    <div class="reg-error" id="forgotError"></div>
+    <div class="reg-success" id="forgotSuccess"></div>
+
+    <!-- STEP 1: Email -->
+    <div id="fgStep1">
+      <div class="form-group">
+        <label>Email đã đăng ký <span style="color:#dc2626;">*</span></label>
+        <input type="email" id="fgEmail" placeholder="email@example.com" autocomplete="email" />
+      </div>
+      <div class="reg-actions">
+        <button type="button" class="reg-cancel" onclick="closeForgot()">Hủy</button>
+        <button type="button" class="reg-submit" id="fgStep1Btn" onclick="fgSendOtp()">Gửi mã OTP</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Nhập OTP -->
+    <div id="fgStep2" style="display:none;">
+      <div class="form-group">
+        <label>Mã OTP (6 số) <span style="color:#dc2626;">*</span></label>
+        <input type="text" id="fgOtp" inputmode="numeric" maxlength="6" placeholder="••••••"
+               style="text-align:center; font-size:24px; letter-spacing:8px; font-family:monospace; color:#0f172a;" />
+        <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Mã có hiệu lực <b>5 phút</b>. Kiểm tra hộp thư <span id="fgEmailShow" style="color:#0369a1; font-weight:600;">—</span></small>
+        <div style="margin-top:8px; font-size:12.5px;">
+          Không nhận được mã? <a href="#" onclick="event.preventDefault(); fgResendOtp(this);" style="color:#4f46e5; font-weight:600; text-decoration:none;">Gửi lại mã</a>
+        </div>
+      </div>
+      <div class="reg-actions">
+        <button type="button" class="reg-cancel" onclick="fgBackToStep1()">‹ Đổi email</button>
+        <button type="button" class="reg-submit" onclick="fgVerifyOtp()">Xác nhận OTP</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Mật khẩu mới -->
+    <div id="fgStep3" style="display:none;">
+      <div class="form-group">
+        <label>Mật khẩu mới <span style="color:#dc2626;">*</span></label>
+        <div class="pw-wrap">
+          <input type="password" id="fgNewPass" minlength="8" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" onclick="togglePwField('fgNewPass', 'fgEyeIcon')">
+            <svg id="fgEyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <small id="fgPwHint" class="pw-hint" style="display:block;">Mật khẩu tối thiểu 8 ký tự, có chữ HOA, chữ thường và số</small>
+      </div>
+      <div class="form-group">
+        <label>Nhập lại mật khẩu mới <span style="color:#dc2626;">*</span></label>
+        <div class="pw-wrap">
+          <input type="password" id="fgConfirmPass" minlength="8" autocomplete="new-password" />
+          <button type="button" class="pw-toggle" onclick="togglePwField('fgConfirmPass', 'fgEyeIcon2')">
+            <svg id="fgEyeIcon2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="reg-actions">
+        <button type="button" class="reg-cancel" onclick="closeForgot()">Hủy</button>
+        <button type="button" class="reg-submit" id="fgStep3Btn" onclick="fgResetPassword()">Đặt lại mật khẩu</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2157,6 +2547,17 @@
   const EYE_ICON = '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>';
   const EYE_OFF_ICON = '<path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>';
 
+  /* Generic toggle cho field password bất kỳ (dùng cho register modal) */
+  function togglePwField(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (!input || !icon) return;
+    const showing = input.type === 'password';
+    input.type = showing ? 'text' : 'password';
+    icon.innerHTML = showing ? EYE_OFF_ICON : EYE_ICON;
+    icon.closest('button').setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
+  }
+
   function togglePassword() {
     const pw = document.getElementById('loginPass');
     const icon = document.getElementById('pwEyeIcon');
@@ -2175,19 +2576,314 @@
     document.getElementById('regModal').classList.add('open');
     document.getElementById('regError').classList.remove('show');
     document.getElementById('regSuccess').classList.remove('show');
-    setTimeout(() => document.getElementById('regPhone').focus(), 100);
+    /* Ngày sinh không cho chọn ngày tương lai */
+    const dob = document.getElementById('regDob');
+    if (dob) dob.max = new Date().toISOString().split('T')[0];
+    setTimeout(() => document.getElementById('regName').focus(), 100);
   }
+
+  /* Toggle sub-form Học sinh/SV */
+  function toggleStudentForm() {
+    const form = document.getElementById('regStudentForm');
+    const on   = document.getElementById('regStudent').checked;
+    if (form) form.style.display = on ? 'block' : 'none';
+    if (on) updateStudentTypeForm();
+  }
+
+  /* Đổi label/field theo radio Student / Teacher / Sĩ tử */
+  function updateStudentTypeForm() {
+    const type = (document.querySelector('input[name="studentType"]:checked') || {}).value || 'student';
+    const idLabel        = document.getElementById('regIdLabel');
+    const idInput        = document.getElementById('regStudentId');
+    const expRow         = document.getElementById('regExpRow');
+    const expField       = document.getElementById('regExpField');
+    const expLabel       = document.getElementById('regExpLabel');
+    const cardNameField  = document.getElementById('regCardNameField');
+    const cccdField      = document.getElementById('regCccdField');
+    const cardName2Field = document.getElementById('regCardName2Field');
+    const uploadTitle    = document.getElementById('regUploadTitle');
+    const uploadSample   = document.getElementById('regUploadSample');
+    const uploadNote     = document.getElementById('regUploadNote');
+    const levelLabel     = document.getElementById('regLevelLabel');
+    const levelSel       = document.getElementById('regLevel');
+
+    /* Reset trước — mỗi case tự bật lại field cần */
+    cardNameField.style.display  = '';
+    cccdField.style.display      = 'none';
+    cardName2Field.style.display = 'none';
+    expField.style.display       = '';
+    expRow.style.gridTemplateColumns = '';
+    uploadSample.style.display   = 'none';
+    levelSel.disabled            = false;
+
+    if (type === 'teacher') {
+      /* Giáo viên: bỏ ngày hết hạn, email full-width */
+      idLabel.textContent = 'Mã giáo viên/giảng viên';
+      idInput.placeholder = 'Nhập mã giáo viên/giảng viên';
+      expField.style.display = 'none';
+      expRow.style.gridTemplateColumns = '1fr';
+      uploadTitle.textContent = 'Tải ảnh thẻ';
+      uploadNote.textContent  = 'Nếu thẻ không có mã giáo viên, vui lòng chụp kèm CCCD và thẻ giáo viên trong cùng 1 khung hình, dùng số CCCD thay cho mã giáo viên';
+      levelLabel.textContent  = 'Cấp giảng dạy';
+    } else if (type === 'exam') {
+      /* Sĩ tử: SBD + CCCD ở row 2, Họ tên + Email ở row 3 (không có ngày) */
+      idLabel.textContent      = 'Số dự thi sĩ tử';
+      idInput.placeholder      = 'Nhập vào số dự thi của sĩ tử';
+      cardNameField.style.display  = 'none';   /* Họ tên gốc → ẩn */
+      cccdField.style.display      = '';       /* CCCD → hiện */
+      expField.style.display       = 'none';   /* Ngày → ẩn */
+      cardName2Field.style.display = '';       /* Họ tên thay vào chỗ ngày */
+      uploadTitle.textContent  = 'Tải lên ảnh giấy dự thi của sĩ tử';
+      uploadSample.style.display = '';
+      uploadNote.textContent   = 'Ảnh cần thể hiện được số dự thi và họ tên thí sinh sĩ tử';
+      levelLabel.textContent   = 'Cấp học';
+      /* Sĩ tử mặc định là THPT, không cho đổi */
+      levelSel.value    = 'highschool';
+      levelSel.disabled = true;
+    } else {
+      /* HS-SV: mặc định */
+      idLabel.textContent = 'Mã học sinh/sinh viên';
+      idInput.placeholder = 'Nhập mã HS/SV';
+      expLabel.textContent    = 'Ngày hết hạn thẻ / ra trường dự kiến';
+      uploadTitle.textContent = 'Tải ảnh thẻ';
+      uploadNote.textContent  = 'Nếu thẻ sinh viên không có niên khoá, vui lòng bổ sung thêm hình ảnh xác minh thời gian học';
+      levelLabel.textContent  = 'Cấp học';
+    }
+  }
+
+  /* Đọc file đầu vào → base64 data URL (null nếu không có file) */
+  function fileToBase64(input) {
+    return new Promise((resolve) => {
+      const f = input && input.files && input.files[0];
+      if (!f) return resolve(null);
+      const r = new FileReader();
+      r.onload = (e) => resolve(e.target.result);
+      r.onerror = () => resolve(null);
+      r.readAsDataURL(f);
+    });
+  }
+
+  /* Toggle sub-form Doanh nghiệp */
+  function toggleBusinessForm() {
+    const form = document.getElementById('regBusinessForm');
+    const on   = document.getElementById('regBusiness').checked;
+    if (form) form.style.display = on ? 'block' : 'none';
+  }
+
+  /* Preview file: ảnh thì show thumbnail, PDF thì show icon + tên */
+  function previewCardImg(input, prevId) {
+    const file = input.files && input.files[0];
+    const box  = document.getElementById(prevId);
+    if (!file || !box) return;
+    /* PDF tối đa 5MB, ảnh tối đa 10MB */
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    const maxMB = isPdf ? 5 : 10;
+    if (file.size > maxMB * 1024 * 1024) {
+      alert(`File quá ${maxMB} MB`); input.value = ''; return;
+    }
+    if (isPdf) {
+      box.innerHTML = `<div style="font-size:36px;">📄</div><div style="margin-top:6px; font-size:13px; color:#15803d; font-weight:600;">✓ ${file.name}</div><div style="font-size:11px; color:#94a3b8; margin-top:2px;">${(file.size/1024/1024).toFixed(2)} MB</div>`;
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      box.innerHTML = `<img src="${e.target.result}" alt="preview" /><div style="margin-top:6px; font-size:11px; color:#15803d;">✓ ${file.name}</div>`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* Helper text password: xanh khi đủ 8 ký tự + HOA + thường + số */
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'regPassword') {
+      const v = e.target.value;
+      const ok = v.length >= 8 && /[A-Z]/.test(v) && /[a-z]/.test(v) && /\d/.test(v);
+      const hint = document.getElementById('regPwHint');
+      if (hint) {
+        hint.classList.toggle('ok', ok);
+        hint.textContent = ok
+          ? '✓ Mật khẩu hợp lệ'
+          : 'Mật khẩu tối thiểu 8 ký tự, có chữ HOA, chữ thường và số';
+      }
+    }
+  });
   function closeRegister() {
     document.getElementById('regModal').classList.remove('open');
   }
+
+  /* ─── Forgot password flow ─── */
+  let _fgEmail = '';
+  let _fgOtp   = '';
+
+  function openForgot() {
+    document.getElementById('forgotModal').classList.add('open');
+    fgBackToStep1(true);
+  }
+  function closeForgot() {
+    document.getElementById('forgotModal').classList.remove('open');
+  }
+  function fgShowError(msg) {
+    const el = document.getElementById('forgotError');
+    el.textContent = msg;
+    el.classList.add('show');
+    document.getElementById('forgotSuccess').classList.remove('show');
+  }
+  function fgShowSuccess(msg) {
+    const el = document.getElementById('forgotSuccess');
+    el.textContent = msg;
+    el.classList.add('show');
+    document.getElementById('forgotError').classList.remove('show');
+  }
+  function fgClearMsg() {
+    document.getElementById('forgotError').classList.remove('show');
+    document.getElementById('forgotSuccess').classList.remove('show');
+  }
+  function fgShowStep(n) {
+    document.getElementById('fgStep1').style.display = (n === 1) ? '' : 'none';
+    document.getElementById('fgStep2').style.display = (n === 2) ? '' : 'none';
+    document.getElementById('fgStep3').style.display = (n === 3) ? '' : 'none';
+  }
+  function fgBackToStep1(resetAll) {
+    fgShowStep(1);
+    fgClearMsg();
+    if (resetAll) {
+      document.getElementById('fgEmail').value = '';
+      document.getElementById('fgOtp').value = '';
+      document.getElementById('fgNewPass').value = '';
+      document.getElementById('fgConfirmPass').value = '';
+      _fgEmail = ''; _fgOtp = '';
+      document.getElementById('forgotTitle').textContent = 'Quên mật khẩu';
+      document.getElementById('forgotSub').textContent = 'Nhập email đã đăng ký để nhận mã OTP đặt lại mật khẩu.';
+    }
+    setTimeout(() => document.getElementById('fgEmail').focus(), 100);
+  }
+
+  async function fgSendOtp() {
+    fgClearMsg();
+    const email = document.getElementById('fgEmail').value.trim();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return fgShowError('Email không hợp lệ');
+    }
+    const btn = document.getElementById('fgStep1Btn');
+    btn.disabled = true; btn.textContent = 'Đang gửi...';
+    try {
+      const res = await api('/auth/forgot', { method: 'POST', body: { email } });
+      _fgEmail = email;
+      document.getElementById('fgEmailShow').textContent = email;
+      document.getElementById('forgotTitle').textContent = 'Nhập mã OTP';
+      document.getElementById('forgotSub').textContent = 'Mã OTP 6 số đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư và thư mục Spam.';
+      fgShowStep(2);
+      fgShowSuccess(`✓ Mã OTP đã được gửi tới ${email}`);
+      setTimeout(() => document.getElementById('fgOtp').focus(), 100);
+    } catch (err) {
+      fgShowError(err.message || 'Lỗi gửi OTP');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Gửi mã OTP';
+    }
+  }
+
+  async function fgResendOtp(linkEl) {
+    fgClearMsg();
+    if (!_fgEmail) return fgShowError('Vui lòng quay lại nhập email');
+    /* Countdown 30s tránh spam */
+    if (linkEl && linkEl.dataset.cooldown === '1') return;
+    try {
+      const res = await api('/auth/forgot', { method: 'POST', body: { email: _fgEmail } });
+      document.getElementById('fgOtp').value = '';
+      fgShowSuccess(`✓ Mã OTP mới đã được gửi tới ${_fgEmail}`);
+      /* Cooldown */
+      if (linkEl) {
+        linkEl.dataset.cooldown = '1';
+        const original = linkEl.textContent;
+        let n = 30;
+        linkEl.style.color = '#94a3b8';
+        linkEl.style.pointerEvents = 'none';
+        const timer = setInterval(() => {
+          linkEl.textContent = `Gửi lại sau ${n}s`;
+          n--;
+          if (n < 0) {
+            clearInterval(timer);
+            linkEl.textContent = original;
+            linkEl.style.color = '';
+            linkEl.style.pointerEvents = '';
+            linkEl.dataset.cooldown = '0';
+          }
+        }, 1000);
+      }
+      setTimeout(() => document.getElementById('fgOtp').focus(), 100);
+    } catch (err) {
+      fgShowError(err.message || 'Lỗi gửi lại OTP');
+    }
+  }
+
+  async function fgVerifyOtp() {
+    fgClearMsg();
+    const otp = document.getElementById('fgOtp').value.trim();
+    if (!/^\d{6}$/.test(otp)) return fgShowError('OTP phải là 6 chữ số');
+    const btn = event && event.target;
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang kiểm tra...'; }
+    try {
+      await api('/auth/verify-otp', { method: 'POST', body: { email: _fgEmail, otp } });
+      _fgOtp = otp;
+      document.getElementById('forgotTitle').textContent = 'Đặt mật khẩu mới';
+      document.getElementById('forgotSub').textContent = 'Mật khẩu mới phải đủ mạnh (8 ký tự, có HOA, thường, số).';
+      fgShowStep(3);
+      setTimeout(() => document.getElementById('fgNewPass').focus(), 100);
+    } catch (err) {
+      fgShowError(err.message || 'OTP không hợp lệ');
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Xác nhận OTP'; }
+    }
+  }
+
+  async function fgResetPassword() {
+    fgClearMsg();
+    const newPass = document.getElementById('fgNewPass').value;
+    const confirm = document.getElementById('fgConfirmPass').value;
+    if (newPass.length < 8 || !/[A-Z]/.test(newPass) || !/[a-z]/.test(newPass) || !/\d/.test(newPass)) {
+      return fgShowError('Mật khẩu tối thiểu 8 ký tự, có chữ HOA, chữ thường và số');
+    }
+    if (newPass !== confirm) return fgShowError('Mật khẩu xác nhận không khớp');
+    const btn = document.getElementById('fgStep3Btn');
+    btn.disabled = true; btn.textContent = 'Đang đổi...';
+    try {
+      await api('/auth/reset-password', {
+        method: 'POST',
+        body: { email: _fgEmail, otp: _fgOtp, new_password: newPass },
+      });
+      fgShowSuccess('✓ Đặt lại mật khẩu thành công! Đang chuyển về đăng nhập...');
+      setTimeout(() => {
+        closeForgot();
+        document.getElementById('loginUser').value = _fgEmail;
+        document.getElementById('loginPass').focus();
+      }, 1500);
+    } catch (err) {
+      fgShowError(err.message || 'Lỗi đặt lại mật khẩu');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Đặt lại mật khẩu';
+    }
+  }
+
+  /* Helper text password mới (live xanh khi valid) */
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'fgNewPass') {
+      const v = e.target.value;
+      const ok = v.length >= 8 && /[A-Z]/.test(v) && /[a-z]/.test(v) && /\d/.test(v);
+      const hint = document.getElementById('fgPwHint');
+      if (hint) {
+        hint.classList.toggle('ok', ok);
+        hint.textContent = ok ? '✓ Mật khẩu hợp lệ' : 'Mật khẩu tối thiểu 8 ký tự, có chữ HOA, chữ thường và số';
+      }
+    }
+  });
+
   async function registerCustomer() {
     const fullName = document.getElementById('regName').value.trim();
+    const dob      = document.getElementById('regDob').value;
     const phone    = document.getElementById('regPhone').value.trim().replace(/\s/g, '');
-    const username = document.getElementById('regUsername').value.trim().toLowerCase();
+    const email    = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
     const passConf = document.getElementById('regPasswordConfirm').value;
-    const email    = document.getElementById('regEmail').value.trim();
-    const address  = document.getElementById('regAddress').value.trim();
+    const agreed   = document.getElementById('regAgree').checked;
     const errorEl  = document.getElementById('regError');
     const okEl     = document.getElementById('regSuccess');
     const btn      = document.getElementById('regSubmitBtn');
@@ -2203,20 +2899,61 @@
     /* Client-side validation */
     if (!fullName) return showError('Vui lòng nhập họ và tên');
     if (!/^\d{9,11}$/.test(phone)) return showError('Số điện thoại không hợp lệ (9-11 chữ số)');
-    if (!/^[a-z0-9]{3,30}$/.test(username)) {
-      return showError('Tên đăng nhập: 3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu/ký tự đặc biệt');
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return showError('Vui lòng nhập email hợp lệ (dùng để nhận mã OTP khi quên mật khẩu)');
     }
     if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
       return showError('Mật khẩu tối thiểu 8 ký tự, gồm chữ HOA, chữ thường và số');
     }
     if (password !== passConf) return showError('Mật khẩu xác nhận không khớp');
+    if (!agreed) return showError('Vui lòng đồng ý với Điều khoản và Chính sách trước khi đăng ký');
+
+    /* Auto-gen username từ SĐT (user dùng SĐT làm định danh) */
+    const username = 'user' + phone;
+
+    /* Thu thập hồ sơ mở rộng nếu toggle bật */
+    const isStudent = document.getElementById('regStudent').checked;
+    const isBusiness = document.getElementById('regBusiness').checked;
+    const body = { phone, username, full_name: fullName, password, email: email || undefined, birthday: dob || undefined };
+
+    if (isStudent) {
+      const stype = (document.querySelector('input[name="studentType"]:checked') || {}).value || 'student';
+      body.student_profile = {
+        type: stype,
+        level: document.getElementById('regLevel').value || null,
+        school: document.getElementById('regSchool').value.trim() || null,
+        student_id: document.getElementById('regStudentId').value.trim() || null,
+        cccd: stype === 'exam' ? (document.getElementById('regCccd').value.trim() || null) : null,
+        card_name: stype === 'exam'
+          ? (document.getElementById('regCardName2').value.trim() || null)
+          : (document.getElementById('regCardName').value.trim() || null),
+        card_exp: document.getElementById('regCardExp').value || null,
+        school_email: document.getElementById('regSchoolEmail').value.trim() || null,
+        card_front: await fileToBase64(document.getElementById('regCardFront')),
+        card_back:  await fileToBase64(document.getElementById('regCardBack')),
+      };
+    }
+    if (isBusiness) {
+      const taxCode = document.getElementById('regTaxCode').value.trim();
+      if (!taxCode) return showError('Vui lòng nhập Mã số thuế của doanh nghiệp');
+      body.business_profile = {
+        tax_code: taxCode,
+        company_name: document.getElementById('regCompanyName').value.trim() || null,
+        company_address: document.getElementById('regCompanyAddr').value.trim() || null,
+        company_email: document.getElementById('regCompanyEmail').value.trim() || null,
+        auth_person_cccd: document.getElementById('regAuthCccd').value.trim() || null,
+        note: document.getElementById('regBizNote').value.trim() || null,
+        license: await fileToBase64(document.getElementById('regBizLicense')),
+        auth_letter: await fileToBase64(document.getElementById('regAuthLetter')),
+      };
+    }
 
     btn.disabled = true;
     btn.textContent = '...';
     try {
       const { token, customer } = await api('/auth/register', {
         method: 'POST',
-        body: { phone, username, full_name: fullName, password, email: email || undefined, address: address || undefined },
+        body,
       });
       apiToken.set(token);
       sessionStorage.setItem(ROLE_KEY, 'customer');
@@ -2227,6 +2964,7 @@
         username: customer.username,
         email: customer.email,
         address: customer.address,
+        account_type: customer.account_type || 'individual',
         avatar: '',
       }));
       okEl.textContent = 'Đăng ký thành công! Đang đăng nhập…';
