@@ -23,13 +23,14 @@ db.exec(schema);
    nếu bảng đã tồn tại. Ta phải migrate tay cho các DB cũ. */
 (function migrateCustomersUsername() {
   const cols = db.prepare("PRAGMA table_info(customers)").all();
-  if (cols.find(c => c.name === 'username')) return;
-  console.log('[migration] customers.username column thiếu — đang thêm...');
-  db.exec(`
-    ALTER TABLE customers ADD COLUMN username TEXT;
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_username ON customers(username);
-  `);
-  console.log('[migration] customers.username added OK');
+  const hasUsername = cols.find(c => c.name === 'username');
+  if (!hasUsername) {
+    console.log('[migration] customers.username column thiếu — đang thêm...');
+    db.exec('ALTER TABLE customers ADD COLUMN username TEXT');
+    console.log('[migration] customers.username added OK');
+  }
+  /* Index idempotent — chạy mỗi lần startup */
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_username ON customers(username)');
 })();
 
 (function migrateUsersRoleCheck() {
@@ -60,6 +61,16 @@ db.exec(schema);
     PRAGMA foreign_keys = ON;
   `);
   console.log('[migration] users.role CHECK migrated OK');
+})();
+
+/* Migration: account_type cho customers (individual/student/business) */
+(function migrateAccountType() {
+  const cols = db.prepare("PRAGMA table_info(customers)").all();
+  if (!cols.find(c => c.name === 'account_type')) {
+    console.log('[migration] customers.account_type thiếu — đang thêm...');
+    db.exec("ALTER TABLE customers ADD COLUMN account_type TEXT NOT NULL DEFAULT 'individual'");
+    console.log('[migration] customers.account_type added OK');
+  }
 })();
 
 module.exports = db;

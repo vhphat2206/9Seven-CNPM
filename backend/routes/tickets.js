@@ -93,11 +93,16 @@ router.get('/', auth(), (req, res) => {
 
   let sql = `
     SELECT t.*, c.full_name AS customer_name, c.phone AS customer_phone,
+           c.account_type AS customer_account_type,
+           bp.tax_code AS biz_tax_code, bp.company_name AS biz_company_name,
+           bp.company_address AS biz_company_address,
            tech.name AS technician_name,
            p.invoice_no AS paid_invoice_no, p.method AS paid_method,
-           p.paid_at AS paid_at, p.final_amount AS paid_final_amount
+           p.paid_at AS paid_at, p.final_amount AS paid_final_amount,
+           p.discount_pct AS paid_discount_pct, p.note AS paid_note
     FROM tickets t
     LEFT JOIN customers c     ON c.id = t.customer_id
+    LEFT JOIN business_profiles bp ON bp.customer_id = c.id AND bp.status = 'approved'
     LEFT JOIN technicians tech ON tech.id = t.technician_id
     LEFT JOIN payments p      ON p.ticket_id = t.id
     WHERE 1=1
@@ -331,7 +336,7 @@ router.patch('/:code', auth(['admin', 'manager', 'reception']), (req, res) => {
 });
 
 /* ─── Change ticket status ───────────────────────────────── */
-router.patch('/:code/status', auth(['admin', 'manager', 'reception']), (req, res) => {
+router.patch('/:code/status', auth(['admin', 'manager', 'reception', 'technician']), (req, res) => {
   const { status, note } = req.body || {};
   if (!VALID_STATUS.has(status)) {
     return res.status(400).json({ error: 'Trạng thái không hợp lệ' });
@@ -341,6 +346,18 @@ router.patch('/:code/status', auth(['admin', 'manager', 'reception']), (req, res
   if (!ticket) return res.status(404).json({ error: 'Không tìm thấy phiếu' });
   if (ticket.status === status) {
     return res.status(400).json({ error: 'Phiếu đã ở trạng thái này' });
+  }
+
+  /* KTV chỉ được update phiếu của chính mình + KHÔNG được sang trạng thái 'delivered'
+     (delivered = đã giao trả khách, do reception/cashier phụ trách) */
+  if (req.user.role === 'technician') {
+    const myTech = db.prepare('SELECT id FROM technicians WHERE user_id = ?').get(req.user.sub);
+    if (!myTech || ticket.technician_id !== myTech.id) {
+      return res.status(403).json({ error: 'KTV chỉ được cập nhật phiếu của mình' });
+    }
+    if (status === 'delivered' || status === 'cancelled') {
+      return res.status(403).json({ error: 'KTV không có quyền giao trả/huỷ phiếu (gọi lễ tân)' });
+    }
   }
 
   db.prepare(`

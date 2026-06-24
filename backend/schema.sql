@@ -49,9 +49,9 @@ CREATE TABLE IF NOT EXISTS customers (
   updated_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_customers_phone    ON customers(phone);
-CREATE INDEX IF NOT EXISTS idx_customers_username ON customers(username);
-CREATE INDEX IF NOT EXISTS idx_customers_name     ON customers(full_name);
+CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
+CREATE INDEX IF NOT EXISTS idx_customers_name  ON customers(full_name);
+/* idx_customers_username — tạo bởi migration trong db.js để tương thích DB cũ */
 
 -- ============================================================
 -- 3. TECHNICIANS (kỹ thuật viên)
@@ -304,3 +304,80 @@ CREATE TABLE IF NOT EXISTS pricing (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pricing_lookup ON pricing(device_type, device_model, issue_code);
+
+-- ============================================================
+-- 15. STUDENT_PROFILES (hồ sơ ưu đãi học sinh/sinh viên/giáo viên/sĩ tử)
+-- Khách đăng ký tài khoản → kèm hồ sơ → admin duyệt → áp giảm giá phí công 10%
+-- ============================================================
+CREATE TABLE IF NOT EXISTS student_profiles (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id     INTEGER NOT NULL UNIQUE,
+  student_type    TEXT NOT NULL CHECK(student_type IN ('student','teacher','exam')),
+  level           TEXT,                              -- 'primary' / 'secondary' / 'highschool' / 'college' / 'university' / 'postgrad'
+  school          TEXT,
+  student_id      TEXT,                              -- mã HS/SV / mã GV / số dự thi
+  cccd            TEXT,                              -- chỉ cho sĩ tử
+  card_name       TEXT,
+  card_exp        DATE,
+  school_email    TEXT,
+  card_front_url  TEXT,                              -- base64 hoặc URL
+  card_back_url   TEXT,
+  status          TEXT NOT NULL DEFAULT 'pending'
+                   CHECK(status IN ('pending','approved','rejected')),
+  reviewed_by     INTEGER,
+  reviewed_at     DATETIME,
+  reject_reason   TEXT,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id)     ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_student_profiles_customer ON student_profiles(customer_id);
+CREATE INDEX IF NOT EXISTS idx_student_profiles_status   ON student_profiles(status);
+
+-- ============================================================
+-- 16. BUSINESS_PROFILES (hồ sơ khách doanh nghiệp)
+-- Chiết khấu 15%/hoá đơn + hoá đơn có MST
+-- ============================================================
+CREATE TABLE IF NOT EXISTS business_profiles (
+  id                INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id       INTEGER NOT NULL UNIQUE,
+  tax_code          TEXT NOT NULL,
+  company_name      TEXT NOT NULL,
+  company_address   TEXT,
+  company_email     TEXT,
+  auth_person_cccd  TEXT,
+  note              TEXT,
+  license_url       TEXT,                            -- GPKD (base64 / URL)
+  auth_letter_url   TEXT,                            -- giấy uỷ quyền
+  status            TEXT NOT NULL DEFAULT 'pending'
+                     CHECK(status IN ('pending','approved','rejected')),
+  reviewed_by       INTEGER,
+  reviewed_at       DATETIME,
+  reject_reason     TEXT,
+  created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+  FOREIGN KEY (reviewed_by) REFERENCES users(id)     ON DELETE SET NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_business_profiles_customer ON business_profiles(customer_id);
+CREATE INDEX IF NOT EXISTS idx_business_profiles_status   ON business_profiles(status);
+CREATE INDEX IF NOT EXISTS idx_business_profiles_tax      ON business_profiles(tax_code);
+
+-- ============================================================
+-- 17. PASSWORD_RESETS (OTP quên mật khẩu)
+-- Gửi qua email — OTP 6 số, hết hạn 5 phút, dùng 1 lần
+-- ============================================================
+CREATE TABLE IF NOT EXISTS password_resets (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  email       TEXT NOT NULL,
+  otp         TEXT NOT NULL,
+  expires_at  DATETIME NOT NULL,
+  used        INTEGER NOT NULL DEFAULT 0,
+  attempts    INTEGER NOT NULL DEFAULT 0,
+  ip          TEXT,
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_email   ON password_resets(email, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON password_resets(expires_at);

@@ -47,10 +47,27 @@ router.post('/', auth(['admin', 'manager', 'cashier']), (req, res) => {
   if (existing) return res.status(409).json({ error: 'Phiếu đã được thu tiền' });
 
   const subtotal = ticket.quote;
-  const pct = Math.max(0, Math.min(100, parseFloat(discount_pct) || 0));
+  const manualPct = Math.max(0, Math.min(100, parseFloat(discount_pct) || 0));
+
+  /* Auto-discount theo account_type (chỉ áp khi profile đã 'approved') */
+  const acct = db.prepare('SELECT id, account_type FROM customers WHERE id = ?').get(ticket.customer_id);
+  let autoPct = 0;
+  let autoNote = '';
+  if (acct && acct.account_type === 'student') {
+    const sp = db.prepare("SELECT status FROM student_profiles WHERE customer_id = ?").get(ticket.customer_id);
+    if (sp && sp.status === 'approved') { autoPct = 10; autoNote = 'Ưu đãi SV-GV 10%'; }
+  } else if (acct && acct.account_type === 'business') {
+    const bp = db.prepare("SELECT status FROM business_profiles WHERE customer_id = ?").get(ticket.customer_id);
+    if (bp && bp.status === 'approved') { autoPct = 15; autoNote = 'Ưu đãi DN 15%'; }
+  }
+  const pct = Math.min(100, manualPct + autoPct);
   const discountAmount = Math.round(subtotal * pct / 100);
   const finalAmount = subtotal - discountAmount;
   const changeBack = received ? Math.max(0, parseInt(received) - finalAmount) : null;
+  /* Prepend autoNote vào note để hoá đơn hiển thị */
+  const noteCombined = autoNote
+    ? (note ? `${autoNote}. ${note}` : autoNote)
+    : note;
 
   const invoiceNo = nextInvoiceNo();
   const result = db.prepare(`
@@ -61,7 +78,7 @@ router.post('/', auth(['admin', 'manager', 'cashier']), (req, res) => {
   `).run(
     invoiceNo, ticket.id, ticket.customer_id, subtotal, pct,
     discountAmount, finalAmount, method,
-    received ? parseInt(received) : null, changeBack, note || null, req.user.sub
+    received ? parseInt(received) : null, changeBack, noteCombined || null, req.user.sub
   );
 
   /* Auto-advance ticket to "delivered" */
