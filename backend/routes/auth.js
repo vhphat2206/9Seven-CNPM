@@ -39,11 +39,13 @@ router.post('/login', (req, res) => {
     return res.json({ token, user: safeUser });
   }
 
-  /* Fallback: customer (lookup by username column) */
+  /* Fallback: customer (lookup by username OR phone OR email) */
+  const ident = String(username).trim();
   const customer = db.prepare(
     `SELECT id, phone, username, full_name, email, address, password, avatar_url
-     FROM customers WHERE username = ?`
-  ).get(username);
+     FROM customers
+     WHERE username = ? OR REPLACE(phone, ' ', '') = ? OR LOWER(email) = LOWER(?)`
+  ).get(ident, ident, ident);
 
   if (!customer || !customer.password) {
     return res.status(401).json({ error: 'Tài khoản không tồn tại hoặc đã bị khoá' });
