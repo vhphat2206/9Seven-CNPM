@@ -2103,6 +2103,13 @@
           <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Dùng để nhận mã OTP khi quên mật khẩu</small>
         </div>
       </div>
+      <div class="reg-row">
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="regUsername">Tên đăng nhập <span style="color:#94a3b8; font-weight:400;">(Không bắt buộc)</span></label>
+          <input type="text" id="regUsername" autocomplete="username" placeholder="vd: phatvo (chỉ chữ thường a-z và số 0-9)" pattern="[a-z0-9]{3,30}" />
+          <small style="color:#64748b; font-size:11.5px; display:block; margin-top:4px;">Để trống → hệ thống tự đặt theo SĐT. Nếu nhập: 3-30 ký tự, chỉ chữ thường (a-z) và số (0-9).</small>
+        </div>
+      </div>
 
       <h3 class="reg-section">Tạo mật khẩu</h3>
       <div class="reg-row">
@@ -2908,8 +2915,12 @@
     if (password !== passConf) return showError('Mật khẩu xác nhận không khớp');
     if (!agreed) return showError('Vui lòng đồng ý với Điều khoản và Chính sách trước khi đăng ký');
 
-    /* Auto-gen username từ SĐT (user dùng SĐT làm định danh) */
-    const username = 'user' + phone;
+    /* Username: dùng cái khách tự nhập, hoặc auto-gen từ SĐT */
+    const customUsername = (document.getElementById('regUsername').value || '').trim().toLowerCase();
+    if (customUsername && !/^[a-z0-9]{3,30}$/.test(customUsername)) {
+      return showError('Tên đăng nhập: 3-30 ký tự, chỉ chữ thường (a-z) và số (0-9), không dấu/ký tự đặc biệt');
+    }
+    const username = customUsername || ('user' + phone);
 
     /* Thu thập hồ sơ mở rộng nếu toggle bật */
     const isStudent = document.getElementById('regStudent').checked;
